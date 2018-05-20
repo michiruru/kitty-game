@@ -36,11 +36,12 @@ public class Player : MonoBehaviour
 
     [Header("Dash")]
     public bool canDash = true;
+    private bool dashing = false;
     private float nextDash;
-    private float endDash;
+    private float dashDuration;
     public float dashCooldown = 2;
-    public float dashSpeed = 10f;
-    public float dashTime = 0.75f;
+    public float dashSpeed = 25f;
+    public float dashTime = 0.2f;
 
     [Header("AnimationBools")]
     public bool animTravelLeft;
@@ -69,14 +70,22 @@ public class Player : MonoBehaviour
 
         CalculateAnimBools();
 
+        // dash code override
+        if (dashing && dashDuration < dashTime)
+        {
+            velocity.x = dashSpeed * (animTravelLeft ? -1 : 1);
+            velocity.y = 0; // no arc (of the covenant nor otherwise)
+            dashDuration += Time.deltaTime;
+        }
+        else
+        { dashing = false; animDash = false; }
+        // dash code end
+
         controller.Move(velocity * Time.deltaTime, directionalInput);
 
+
         if (controller.collisions.above || controller.collisions.below)
-        {
-            velocity.y = 0f;
-        }
-
-
+        { velocity.y = 0f; }
     }
 
     private void DisableInput()
@@ -100,13 +109,16 @@ public class Player : MonoBehaviour
 
         float targetVelocityX = directionalInput.x * moveSpeed;
 
-        //velocity.x = Mathf.SmoothDamp(velocity.x, targetVelocityX, ref velocityXSmoothing, (controller.collisions.below ? accelerationTimeGrounded : accelerationTimeAirborne));
+        
         velocity.x = targetVelocityX;
         velocity.y += gravity * Time.deltaTime;
 
         anim.SetFloat("velocityX", Mathf.Abs(velocity.x));
         anim.SetFloat("velocityY", Mathf.Abs(velocity.y));
 
+
+        //REDUNDANT CODE
+        //velocity.x = Mathf.SmoothDamp(velocity.x, targetVelocityX, ref velocityXSmoothing, (controller.collisions.below ? accelerationTimeGrounded : accelerationTimeAirborne));
     }
 
     // *** ANIMATIONS *** //
@@ -201,7 +213,10 @@ public class Player : MonoBehaviour
 
     public void OnDash()
     {
-
+        //Debug.Log("dashed");
+        dashDuration = 0.0f;    // reset the current dash timer
+        dashing = true;         // state dashing
+        animDash = true;
     }
 
     private void HandleWallSliding()
