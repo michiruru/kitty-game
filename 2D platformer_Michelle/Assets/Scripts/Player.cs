@@ -116,7 +116,8 @@ public class Player : MonoBehaviour
 
     private void CheckDeath()
     {
-        if(controller.transform.position.y < -10){
+        if (controller.transform.position.y < -10)
+        {
             velocity = new Vector3(0, 0, 0);
             controller.transform.position = new Vector3(-3.8f, -2.29f, -1f);
         }
@@ -131,8 +132,11 @@ public class Player : MonoBehaviour
         if (isGrounded)
         {
             velocity.x = targetVelocityX;
-        }else{
-            if (Mathf.Abs(directionalInput.x)>0.2){    // if you are wanting to actually stop your character with a partial or full controller input
+        }
+        else
+        {
+            if (Mathf.Abs(directionalInput.x) > 0.2)
+            {    // if you are wanting to actually stop your character with a partial or full controller input
                 velocity.x = Mathf.Abs(velocity.x) * directionalInput.x;
             }
         }
@@ -185,6 +189,12 @@ public class Player : MonoBehaviour
         { anim.SetBool("wallClimb", true); }
         else
         { anim.SetBool("wallClimb", false); }
+
+        if (animDash)
+        {
+            anim.SetBool("dash", true);
+        }
+        else { anim.SetBool("dash", false); }
     }
 
     // *** SPECIFIC MOTION SUBROUTINES *** //
