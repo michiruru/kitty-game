@@ -3,35 +3,45 @@
 [RequireComponent(typeof(Controller2D))]
 public class Player : MonoBehaviour
 {
-    public float maxJumpHeight = 4f;
-    public float minJumpHeight = 1f;
-    public float timeToJumpApex = .4f;
-    private float accelerationTimeAirborne = .2f;
-    private float accelerationTimeGrounded = .1f;
+    // Inputs
+    private Controller2D controller;
+    private Vector2 directionalInput;
+    private Vector3 velocity;
+    private float velocityXSmoothing;
+
     public float moveSpeed = 6f;
     private float smoothTimeX;
 
+    // Jumping vars
+    [HideInInspector]
     public Vector2 wallJumpClimb;
+    [HideInInspector]
     public Vector2 wallJumpOff;
+    [HideInInspector]
     public Vector2 wallLeap;
+    [HideInInspector]
+    public float maxJumpHeight = 4f;
+    [HideInInspector]
+    public float minJumpHeight = 1f;
+    [HideInInspector]
+    public float timeToJumpApex = .5f;
 
     public bool canDoubleJump;
     private bool isDoubleJumping = false;
-
-    public float wallSlideSpeedMax = 3f;
-    public float wallStickTime = .25f;
-    private float timeToWallUnstick;
+    public bool isGrounded = true;
 
     private float gravity;
     private float maxJumpVelocity;
     private float minJumpVelocity;
-    private Vector3 velocity;
-    private float velocityXSmoothing;
 
-    private Controller2D controller;
-    private Vector2 directionalInput;
+
+    // Wall sliding
     private bool wallSliding;
     private int wallDirX;
+    public float wallSlideSpeedMax = 3f;
+    public float wallStickTime = .25f;
+    private float timeToWallUnstick;
+    // Disable input timer
     private float disableInputTime = 0.0f;
 
     [Header("Dash")]
@@ -39,9 +49,9 @@ public class Player : MonoBehaviour
     private bool dashing = false;
     private float nextDash;
     private float dashDuration;
-    public float dashCooldown = 2;
-    public float dashSpeed = 25f;
-    public float dashTime = 0.2f;
+    public float dashCooldown;
+    private float dashSpeed = 25f;
+    private float dashTime = 0.2f;
 
     [Header("AnimationBools")]
     public bool animTravelLeft;
@@ -60,11 +70,14 @@ public class Player : MonoBehaviour
         gravity = -(2 * maxJumpHeight) / Mathf.Pow(timeToJumpApex, 2);
         maxJumpVelocity = Mathf.Abs(gravity) * timeToJumpApex;
         minJumpVelocity = Mathf.Sqrt(2 * Mathf.Abs(gravity) * minJumpHeight);
+
+        animGrounded = true;
     }
 
     private void Update()
     {
         DisableInput();
+        CheckDeath();
         CalculateVelocity();
         HandleWallSliding();
 
@@ -101,24 +114,32 @@ public class Player : MonoBehaviour
         }
     }
 
+    private void CheckDeath()
+    {
+        if(controller.transform.position.y < -10){
+            velocity = new Vector3(0, 0, 0);
+            controller.transform.position = new Vector3(-3.8f, -2.29f, -1f);
+        }
+    }
+
     private void CalculateVelocity()
     {
-
-        // currently the directionInput gives both a direction (implictly) and degree (for joystick controller)
-        // however when the char changes direction, the char 'jumps' by ?MovementSpeed
-
         float targetVelocityX = directionalInput.x * moveSpeed;
 
-        
-        velocity.x = targetVelocityX;
+        isGrounded = controller.collisions.below;
+
+        if (isGrounded)
+        {
+            velocity.x = targetVelocityX;
+        }else{
+            if (Mathf.Abs(directionalInput.x)>0.2){    // if you are wanting to actually stop your character with a partial or full controller input
+                velocity.x = Mathf.Abs(velocity.x) * directionalInput.x;
+            }
+        }
         velocity.y += gravity * Time.deltaTime;
 
         anim.SetFloat("velocityX", Mathf.Abs(velocity.x));
         anim.SetFloat("velocityY", Mathf.Abs(velocity.y));
-
-
-        //REDUNDANT CODE
-        //velocity.x = Mathf.SmoothDamp(velocity.x, targetVelocityX, ref velocityXSmoothing, (controller.collisions.below ? accelerationTimeGrounded : accelerationTimeAirborne));
     }
 
     // *** ANIMATIONS *** //
@@ -137,6 +158,8 @@ public class Player : MonoBehaviour
         animDoubleJump = isDoubleJumping && !animGrounded;
 
         animWallClimb = wallSliding;
+
+        if (Time.time < 0.5f) { animGrounded = true; }  // force grounded anim while the character settles to ground
 
         SetAnimator();
     }
@@ -217,6 +240,7 @@ public class Player : MonoBehaviour
         dashDuration = 0.0f;    // reset the current dash timer
         dashing = true;         // state dashing
         animDash = true;
+        disableInputTime = dashTime;
     }
 
     private void HandleWallSliding()

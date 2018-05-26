@@ -3,8 +3,11 @@
 [RequireComponent(typeof(Player))]
 public class PlayerInput : MonoBehaviour
 {
-	public static bool disableInput;
     private Player player;
+    private float nextDashTime;
+
+    [HideInInspector]
+    public static bool disableInput;
 
     private void Start()
     {
@@ -26,7 +29,12 @@ public class PlayerInput : MonoBehaviour
 			}
 
 			if (Input.GetButtonDown ("Dash")) {
-				player.OnDash ();
+                if (nextDashTime <= Time.time)
+                {
+                    nextDashTime = Time.time + player.dashCooldown;
+                    player.OnDash();    
+                }
+
 			}
 		}
 	}
