@@ -5,10 +5,11 @@ public class Player : MonoBehaviour
 {
     // Inputs
     private Controller2D controller;
-    private Vector2 directionalInput;
-    private Vector3 velocity;
+    public Vector2 directionalInput;
+    public Vector3 velocity;
     private float velocityXSmoothing;
 
+    [HideInInspector]
     public float moveSpeed = 6f;
     private float smoothTimeX;
 
@@ -28,7 +29,7 @@ public class Player : MonoBehaviour
 
     public bool canDoubleJump;
     private bool isDoubleJumping = false;
-    public bool isGrounded = true;
+    private bool isGrounded = true;
 
     private float gravity;
     private float maxJumpVelocity;
@@ -46,12 +47,13 @@ public class Player : MonoBehaviour
 
     [Header("Dash")]
     public bool canDash = true;
+    public bool canDirDash = true;
     private bool dashing = false;
     private float nextDash;
     private float dashDuration;
     public float dashCooldown;
-    private float dashSpeed = 25f;
-    private float dashTime = 0.2f;
+    private float dashSpeed = 25f; //25f
+    private float dashTime = 0.2f; //0.2f
 
     [Header("AnimationBools")]
     public bool animTravelLeft;
@@ -86,16 +88,25 @@ public class Player : MonoBehaviour
         // dash code override
         if (dashing && dashDuration < dashTime)
         {
-            velocity.x = dashSpeed * (animTravelLeft ? -1 : 1);
-            velocity.y = 0; // no arc (of the covenant nor otherwise)
+            float totalInput = Mathf.Abs(directionalInput.x) + Mathf.Abs(directionalInput.y);
+            if (canDirDash && totalInput > 0.01)
+            {
+                velocity.x = dashSpeed * directionalInput.x / totalInput;
+                velocity.y = dashSpeed * directionalInput.y / totalInput;
+            }
+            else
+            {
+                velocity.x = dashSpeed * (animTravelLeft ? -1 : 1);
+                velocity.y = 0; // no arc (of the covenant nor otherwise)
+            }
             dashDuration += Time.deltaTime;
         }
         else
         { dashing = false; animDash = false; }
         // dash code end
 
+        // MOVEMENT
         controller.Move(velocity * Time.deltaTime, directionalInput);
-
 
         if (controller.collisions.above || controller.collisions.below)
         { velocity.y = 0f; }
@@ -137,9 +148,13 @@ public class Player : MonoBehaviour
         {
             if (Mathf.Abs(directionalInput.x) > 0.2)
             {    // if you are wanting to actually stop your character with a partial or full controller input
-                velocity.x = Mathf.Abs(velocity.x) * directionalInput.x;
+                if (Mathf.Abs(velocity.x) < 0.01)
+                {velocity.x = targetVelocityX;}  // if not moving horiz then take normal input
+                else
+                {velocity.x = Mathf.Abs(velocity.x) * directionalInput.x;} // if moving horiz then maintain velocity and dampen with targetVelocity
             }
         }
+        //Debug.Log(velocity.x);
         velocity.y += gravity * Time.deltaTime;
 
         anim.SetFloat("velocityX", Mathf.Abs(velocity.x));
