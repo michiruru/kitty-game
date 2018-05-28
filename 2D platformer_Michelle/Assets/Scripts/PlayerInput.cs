@@ -5,7 +5,7 @@ public class PlayerInput : MonoBehaviour
 {
     private Player player;
     private float nextDashTime;
-
+    
     [HideInInspector]
     public static bool disableInput;
 
@@ -15,27 +15,30 @@ public class PlayerInput : MonoBehaviour
     }
 
     private void Update()
-	{
-		if (!disableInput) {
-			Vector2 directionalInput = new Vector2 (Input.GetAxisRaw ("Horizontal"), Input.GetAxisRaw ("Vertical"));
-			player.SetDirectionalInput (directionalInput);
+    {
+        if (!disableInput)
+        {
+            Vector2 directionalInput = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
+            player.SetDirectionalInput(directionalInput);
 
-			if (Input.GetButtonDown ("Jump")) {
-				player.OnJumpInputDown ();
-			}
+            if (Input.GetButtonDown("Jump"))
+            {
+                player.fJumpRejumpEarlyTime = player.fJumpEarlyLeniency;
+                player.bCallJump = true;    // call a jump
+            }
 
-			if (Input.GetButtonUp ("Jump")) {
-				player.OnJumpInputUp ();
-			}
+            if (Input.GetButtonUp("Jump"))
+            { player.OnJumpInputUp(); }
 
-			if (Input.GetButtonDown ("Dash")) {
+            if (Input.GetButtonDown("Dash"))
+            {
                 if (nextDashTime <= Time.time)
                 {
-                    nextDashTime = Time.time + player.dashCooldown;
-                    player.OnDash();    
+                    nextDashTime = Time.time + player.fDashCooldown;
+                    player.OnDash();
                 }
 
-			}
-		}
-	}
+            }
+        }
+    }
 }

@@ -3,58 +3,70 @@
 [RequireComponent(typeof(Controller2D))]
 public class Player : MonoBehaviour
 {
-    // Inputs
+    // DECLARATIONS
+    #region // GameObjects
     private Controller2D controller;
-    public Vector2 directionalInput;
-    public Vector3 velocity;
-    private float velocityXSmoothing;
+    private Animator anim;
+    #endregion
 
-    [HideInInspector]
-    public float moveSpeed = 6f;
-    private float smoothTimeX;
+    #region // Physics vars
+    [Header("Physics Vars")]
+    [HideInInspector] public Vector2 vDirectionalInput;
+    public Vector3 vVelocity;
+    [HideInInspector] public float fMoveSpeed = 6f;
+    public float fMaxMoveSpeed = 6f;
+    private float fGravity;
+    private float fMaxJumpVelocity;
+    private float fMinJumpVelocity;
+    [Range(0.01f, 0.99f)] public float fHorizDampStopping = 0.2f;
+    [Range(0.01f, 0.99f)] public float fHorizDampTurning = 0.2f;
+    [Range(0.01f, 0.99f)] public float fHorizDampAirborne = 0.2f;
+    [Range(0.01f, 0.99f)] public float fHorizDampBasic = 0.2f;
+    #endregion
 
-    // Jumping vars
+    #region // Jumping vars
+    [Header("Jumping")]
     [HideInInspector]
-    public Vector2 wallJumpClimb;
-    [HideInInspector]
-    public Vector2 wallJumpOff;
-    [HideInInspector]
-    public Vector2 wallLeap;
-    [HideInInspector]
-    public float maxJumpHeight = 4f;
-    [HideInInspector]
-    public float minJumpHeight = 1f;
-    [HideInInspector]
-    public float timeToJumpApex = .5f;
+    public bool bCallJump = false;
+    [HideInInspector] public Vector2 vWallJumpClimb;
+    [HideInInspector] public Vector2 vWallJumpOff;
+    [HideInInspector] public Vector2 vWallLeap;
+    [HideInInspector] public float fMaxJumpHeight = 4f;
+    [HideInInspector] public float fMinJumpHeight = 1f;
+    [HideInInspector] public float fTimeToJumpApex = .5f;
 
-    public bool canDoubleJump;
-    private bool isDoubleJumping = false;
-    private bool isGrounded = true;
+    public float fJumpEarlyLeniency = 0.2f;  // amount of time you can early press a jump when airborne and still allow a jump at next grounded event
+    public float fJumpLedgeLeniency = 0.2f;  // amount of time you can be off a platform but still allow a jump to occur
+    [HideInInspector] public float fJumpRejumpEarlyTime;     // timer for early jump bounce leniency
+    [HideInInspector] public float fJumpLedgeEarlyTime;        // timer for off-ledge jump leniency
+    public bool bCanDoubleJump;
+    private bool bIsDoubleJumping = false;
+    private bool bIsGrounded = true;
+    #endregion
 
-    private float gravity;
-    private float maxJumpVelocity;
-    private float minJumpVelocity;
-
-
-    // Wall sliding
-    private bool wallSliding;
-    private int wallDirX;
-    public float wallSlideSpeedMax = 3f;
-    public float wallStickTime = .25f;
-    private float timeToWallUnstick;
+    #region // Wall sliding
+    private bool bIsWallSliding;
+    private int iWallDirX;
+    public float fWallSlideSpeedMax = 3f;
+    public float fWallStickTime = .25f;
+    private float fTimeToWallUnstick;
     // Disable input timer
     private float disableInputTime = 0.0f;
+    #endregion
 
+    #region // Dash vars
     [Header("Dash")]
-    public bool canDash = true;
-    public bool canDirDash = true;
-    private bool dashing = false;
-    private float nextDash;
-    private float dashDuration;
-    public float dashCooldown;
-    private float dashSpeed = 25f; //25f
-    private float dashTime = 0.2f; //0.2f
+    public bool bCanDash = true;
+    public bool bCanDirDash = true;
+    private bool bIsDashing = false;
+    private float fNextDashTime;
+    private float fDashDuration;
+    public float fDashCooldown;
+    private float fDashSpeed = 25f; //25f
+    private float fDashTime = 0.2f; //0.2f
+    #endregion
 
+    #region // Animation bools
     [Header("AnimationBools")]
     public bool animTravelLeft;
     public bool animTravelDown;
@@ -62,16 +74,15 @@ public class Player : MonoBehaviour
     public bool animDoubleJump;
     public bool animWallClimb;
     public bool animDash;
-
-    private Animator anim;
+    #endregion
 
     private void Start()
     {
         anim = GetComponentInChildren<Animator>();
         controller = GetComponent<Controller2D>();
-        gravity = -(2 * maxJumpHeight) / Mathf.Pow(timeToJumpApex, 2);
-        maxJumpVelocity = Mathf.Abs(gravity) * timeToJumpApex;
-        minJumpVelocity = Mathf.Sqrt(2 * Mathf.Abs(gravity) * minJumpHeight);
+        fGravity = -(2 * fMaxJumpHeight) / Mathf.Pow(fTimeToJumpApex, 2);
+        fMaxJumpVelocity = Mathf.Abs(fGravity) * fTimeToJumpApex;
+        fMinJumpVelocity = Mathf.Sqrt(2 * Mathf.Abs(fGravity) * fMinJumpHeight);
 
         animGrounded = true;
     }
@@ -79,37 +90,48 @@ public class Player : MonoBehaviour
     private void Update()
     {
         DisableInput();
+        CalculateTimers();
         CheckDeath();
         CalculateVelocity();
         HandleWallSliding();
 
         CalculateAnimBools();
 
-        // dash code override
-        if (dashing && dashDuration < dashTime)
+        #region // Dash code
+        if (bIsDashing && fDashDuration < fDashTime)
         {
-            float totalInput = Mathf.Abs(directionalInput.x) + Mathf.Abs(directionalInput.y);
-            if (canDirDash && totalInput > 0.01)
+            float totalInput = Mathf.Abs(vDirectionalInput.x) + Mathf.Abs(vDirectionalInput.y);
+            if (bCanDirDash && totalInput > 0.01)
             {
-                velocity.x = dashSpeed * directionalInput.x / totalInput;
-                velocity.y = dashSpeed * directionalInput.y / totalInput;
+                vVelocity.x = fDashSpeed * vDirectionalInput.x / totalInput;
+                vVelocity.y = fDashSpeed * vDirectionalInput.y / totalInput;
             }
             else
             {
-                velocity.x = dashSpeed * (animTravelLeft ? -1 : 1);
-                velocity.y = 0; // no arc (of the covenant nor otherwise)
+                vVelocity.x = fDashSpeed * (animTravelLeft ? -1 : 1);
+                vVelocity.y = 0; // no arc (of the covenant nor otherwise)
             }
-            dashDuration += Time.deltaTime;
+            fDashDuration += Time.deltaTime;
         }
         else
-        { dashing = false; animDash = false; }
-        // dash code end
+        { bIsDashing = false; animDash = false; }
+        #endregion // dash code end
 
-        // MOVEMENT
-        controller.Move(velocity * Time.deltaTime, directionalInput);
+        #region // Apply MOVEMENT
+        OnJumpInputDown();
+        controller.Move(vVelocity * Time.deltaTime, vDirectionalInput);
 
         if (controller.collisions.above || controller.collisions.below)
-        { velocity.y = 0f; }
+        { vVelocity.y = 0f; }
+        #endregion
+    }
+
+    private void CalculateTimers()
+    {
+        fJumpRejumpEarlyTime -= Time.deltaTime;    // leniency for press jump early before grounded
+        fJumpLedgeEarlyTime -= Time.deltaTime;       // leniency for press jump when stepping off ledge
+
+        if (controller.collisions.below) { fJumpLedgeEarlyTime = fJumpLedgeLeniency; }    // once grounded, set leniency time and start counting down
     }
 
     private void DisableInput()
@@ -129,54 +151,67 @@ public class Player : MonoBehaviour
     {
         if (controller.transform.position.y < -10)
         {
-            velocity = new Vector3(0, 0, 0);
+            vVelocity = new Vector3(0, 0, 0);
             controller.transform.position = new Vector3(-3.8f, -2.29f, -1f);
         }
     }
 
     private void CalculateVelocity()
     {
-        float targetVelocityX = directionalInput.x * moveSpeed;
+        float targetVelocityX = vDirectionalInput.x * fMoveSpeed;
+        bIsGrounded = controller.collisions.below;
 
-        isGrounded = controller.collisions.below;
+        #region // Dampen targetVelocityX
+        if (Mathf.Abs(vDirectionalInput.x) < 0.01f)
+            targetVelocityX = vVelocity.x * Mathf.Pow(1f - fHorizDampStopping, Time.deltaTime * 10f);
+        //else if (Mathf.Sign(vDirectionalInput.x) != Mathf.Sign(vVelocity.x))
+            //targetVelocityX = vVelocity.x * Mathf.Pow(1f - fHorizDampTurning, Time.deltaTime * 10f);  //convert directionalInput to boolean (TRUE if travelling RIGHT) then compare with animTravelLeft (hence TURNING occurs when both bools are TRUE (input RIGHT & travel LEFT))
+        else if (controller.collisions.below == false)
+            targetVelocityX = vVelocity.x * Mathf.Pow(1f - fHorizDampAirborne, Time.deltaTime * 10f);
+        //else
+            //targetVelocityX = vVelocity.x * Mathf.Pow(1f - fHorizDampBasic, Time.deltaTime * 10f);
+        #endregion
 
-        if (isGrounded)
+
+        if (bIsGrounded)
         {
-            velocity.x = targetVelocityX;
+            vVelocity.x = targetVelocityX;
         }
         else
         {
-            if (Mathf.Abs(directionalInput.x) > 0.2)
+            if (Mathf.Abs(vDirectionalInput.x) > 0.2)
             {    // if you are wanting to actually stop your character with a partial or full controller input
-                if (Mathf.Abs(velocity.x) < 0.01)
-                {velocity.x = targetVelocityX;}  // if not moving horiz then take normal input
+                if (Mathf.Abs(vVelocity.x) < 0.01)
+                { vVelocity.x = targetVelocityX; }  // if not moving horiz then take normal input
                 else
-                {velocity.x = Mathf.Abs(velocity.x) * directionalInput.x;} // if moving horiz then maintain velocity and dampen with targetVelocity
+                { vVelocity.x = Mathf.Abs(vVelocity.x) * vDirectionalInput.x; } // if moving horiz then maintain velocity and dampen with targetVelocity
             }
         }
-        //Debug.Log(velocity.x);
-        velocity.y += gravity * Time.deltaTime;
+        if (Mathf.Abs(vVelocity.x) > fMaxMoveSpeed) { vVelocity.x = Mathf.Sign(vDirectionalInput.x) * fMaxMoveSpeed; }
 
-        anim.SetFloat("velocityX", Mathf.Abs(velocity.x));
-        anim.SetFloat("velocityY", Mathf.Abs(velocity.y));
+
+
+        vVelocity.y += fGravity * Time.deltaTime;
+
+        anim.SetFloat("velocityX", Mathf.Abs(vVelocity.x));
+        anim.SetFloat("velocityY", Mathf.Abs(vVelocity.y));
     }
 
     // *** ANIMATIONS *** //
-
     private void CalculateAnimBools()
     {
         animGrounded = controller.collisions.below;
 
-        if (velocity.x < -0.5) { animTravelLeft = true; }
-        if (velocity.x > 0.5) { animTravelLeft = false; }
+        if (vVelocity.x < -0.5) { animTravelLeft = true; }
+        if (vVelocity.x > 0.5) { animTravelLeft = false; }
 
-        if (velocity.y < 0 && !animGrounded) { animTravelDown = true; }
+        if (vVelocity.y < 0 && !animGrounded) { animTravelDown = true; }
         else { animTravelDown = false; }
 
 
-        animDoubleJump = isDoubleJumping && !animGrounded;
+        animDoubleJump = bIsDoubleJumping && !animGrounded;
 
-        animWallClimb = wallSliding;
+        animWallClimb = bIsWallSliding;
 
         if (Time.time < 0.5f) { animGrounded = true; }  // force grounded anim while the character settles to ground
 
@@ -215,88 +250,94 @@ public class Player : MonoBehaviour
     // *** SPECIFIC MOTION SUBROUTINES *** //
     public void SetDirectionalInput(Vector2 input)
     {
-        directionalInput = input;
+        vDirectionalInput = input;
     }
 
     public void OnJumpInputDown()
     {
-        if (wallSliding)
+        if (bIsWallSliding && bCallJump)
         {
-            if (wallDirX == directionalInput.x)
+            if (iWallDirX == vDirectionalInput.x)
             {
-                velocity.x = -wallDirX * wallJumpClimb.x;
-                velocity.y = wallJumpClimb.y;
+                vVelocity.x = -iWallDirX * vWallJumpClimb.x;
+                vVelocity.y = vWallJumpClimb.y;
             }
-            else if (directionalInput.x == 0)
+            else if (vDirectionalInput.x == 0)
             {
-                velocity.x = -wallDirX * wallJumpOff.x;
-                velocity.y = wallJumpOff.y;
+                vVelocity.x = -iWallDirX * vWallJumpOff.x;
+                vVelocity.y = vWallJumpOff.y;
             }
             else
             {
-                velocity.x = -wallDirX * wallLeap.x;
-                velocity.y = wallLeap.y;
+                vVelocity.x = -iWallDirX * vWallLeap.x;
+                vVelocity.y = vWallLeap.y;
             }
-            isDoubleJumping = false;
+            bIsDoubleJumping = false;
+            bCallJump = false;  // end jump call
         }
-        if (controller.collisions.below)
+        if ((fJumpRejumpEarlyTime > 0) && (fJumpLedgeEarlyTime > 0))    // did press within lenient times? (NO END JUMP CALL)
         {
-            velocity.y = maxJumpVelocity;
-            isDoubleJumping = false;
+            fJumpRejumpEarlyTime = 0;
+            fJumpLedgeEarlyTime = 0;
+
+            vVelocity.y = fMaxJumpVelocity;
+            bIsDoubleJumping = false;
         }
-        if (canDoubleJump && !controller.collisions.below && !isDoubleJumping && !wallSliding)
+        if (bCanDoubleJump && !controller.collisions.below && !bIsDoubleJumping && !bIsWallSliding && bCallJump)
         {
-            velocity.y = maxJumpVelocity;
-            isDoubleJumping = true;
+            vVelocity.y = fMaxJumpVelocity;
+            bIsDoubleJumping = true;
+            bCallJump = false;  // end jump call
         }
+
+
     }
 
     public void OnJumpInputUp()
     {
-        if (velocity.y > minJumpVelocity)
+        if (vVelocity.y > fMinJumpVelocity)
         {
-            velocity.y = minJumpVelocity;
+            vVelocity.y = fMinJumpVelocity;
         }
     }
 
     public void OnDash()
     {
         //Debug.Log("dashed");
-        dashDuration = 0.0f;    // reset the current dash timer
-        dashing = true;         // state dashing
+        fDashDuration = 0.0f;    // reset the current dash timer
+        bIsDashing = true;         // state dashing
         animDash = true;
-        disableInputTime = dashTime;
+        disableInputTime = fDashTime;
     }
 
     private void HandleWallSliding()
     {
-        wallDirX = (controller.collisions.left) ? -1 : 1;
-        wallSliding = false;
-        if ((controller.collisions.left || controller.collisions.right) && !controller.collisions.below && velocity.y < 0)
+        iWallDirX = (controller.collisions.left) ? -1 : 1;
+        bIsWallSliding = false;
+        if ((controller.collisions.left || controller.collisions.right) && !controller.collisions.below && vVelocity.y < 0)
         {
-            wallSliding = true;
+            bIsWallSliding = true;
 
-            if (velocity.y < -wallSlideSpeedMax)
+            if (vVelocity.y < -fWallSlideSpeedMax)
             {
-                velocity.y = -wallSlideSpeedMax;
+                vVelocity.y = -fWallSlideSpeedMax;
             }
 
-            if (timeToWallUnstick > 0f)
+            if (fTimeToWallUnstick > 0f)
             {
-                velocityXSmoothing = 0f;
-                velocity.x = 0f;
-                if (directionalInput.x != wallDirX && directionalInput.x != 0f)
+                vVelocity.x = 0f;
+                if (vDirectionalInput.x != iWallDirX && vDirectionalInput.x != 0f)
                 {
-                    timeToWallUnstick -= Time.deltaTime;
+                    fTimeToWallUnstick -= Time.deltaTime;
                 }
                 else
                 {
-                    timeToWallUnstick = wallStickTime;
+                    fTimeToWallUnstick = fWallStickTime;
                 }
             }
             else
             {
-                timeToWallUnstick = wallStickTime;
+                fTimeToWallUnstick = fWallStickTime;
             }
         }
     }
