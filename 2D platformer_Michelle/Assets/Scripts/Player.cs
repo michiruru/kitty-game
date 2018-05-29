@@ -11,17 +11,14 @@ public class Player : MonoBehaviour
 
     #region // Physics vars
     [Header("Physics Vars")]
-    [HideInInspector] public Vector2 vDirectionalInput;
+    [HideInInspector]
+    public Vector2 vDirectionalInput;
     public Vector3 vVelocity;
-    [HideInInspector] public float fMoveSpeed = 6f;
     public float fMaxMoveSpeed = 6f;
     private float fGravity;
     private float fMaxJumpVelocity;
     private float fMinJumpVelocity;
-    [Range(0.01f, 0.99f)] public float fHorizDampStopping = 0.2f;
-    [Range(0.01f, 0.99f)] public float fHorizDampTurning = 0.2f;
-    [Range(0.01f, 0.99f)] public float fHorizDampAirborne = 0.2f;
-    [Range(0.01f, 0.99f)] public float fHorizDampBasic = 0.2f;
+
     #endregion
 
     #region // Jumping vars
@@ -158,20 +155,10 @@ public class Player : MonoBehaviour
 
     private void CalculateVelocity()
     {
-        float targetVelocityX = vDirectionalInput.x * fMoveSpeed;
+        float targetVelocityX = vDirectionalInput.x * fMaxMoveSpeed;
         bIsGrounded = controller.collisions.below;
 
-        #region // Dampen targetVelocityX
-        if (Mathf.Abs(vDirectionalInput.x) < 0.01f)
-            targetVelocityX = vVelocity.x * Mathf.Pow(1f - fHorizDampStopping, Time.deltaTime * 10f);
-        //else if (Mathf.Sign(vDirectionalInput.x) != Mathf.Sign(vVelocity.x))
-            //targetVelocityX = vVelocity.x * Mathf.Pow(1f - fHorizDampTurning, Time.deltaTime * 10f);  //convert directionalInput to boolean (TRUE if travelling RIGHT) then compare with animTravelLeft (hence TURNING occurs when both bools are TRUE (input RIGHT & travel LEFT))
-        else if (controller.collisions.below == false)
-            targetVelocityX = vVelocity.x * Mathf.Pow(1f - fHorizDampAirborne, Time.deltaTime * 10f);
-        //else
-            //targetVelocityX = vVelocity.x * Mathf.Pow(1f - fHorizDampBasic, Time.deltaTime * 10f);
-        #endregion
-
+        vVelocity.x = targetVelocityX;
 
         if (bIsGrounded)
         {
@@ -288,7 +275,9 @@ public class Player : MonoBehaviour
             vVelocity.y = fMaxJumpVelocity;
             bIsDoubleJumping = true;
             bCallJump = false;  // end jump call
+            Debug.Log("doublejumop");
         }
+
 
 
     }
