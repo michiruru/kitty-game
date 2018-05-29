@@ -11,17 +11,18 @@ public class Player : MonoBehaviour
 
     #region // Physics vars
     [Header("Physics Vars")]
-    [HideInInspector] public Vector2 vDirectionalInput;
+public Vector2 vDirectionalInput;
     public Vector3 vVelocity;
-    [HideInInspector] public float fMoveSpeed = 6f;
-    public float fMaxMoveSpeed = 6f;
-    private float fGravity;
+    public Vector3 vVelocityLastFrame;
+public float fMaxMoveSpeed = 6f;
+private float fGravity;
     private float fMaxJumpVelocity;
     private float fMinJumpVelocity;
     [Range(0.01f, 0.99f)] public float fHorizDampStopping = 0.2f;
     [Range(0.01f, 0.99f)] public float fHorizDampTurning = 0.2f;
     [Range(0.01f, 0.99f)] public float fHorizDampAirborne = 0.2f;
     [Range(0.01f, 0.99f)] public float fHorizDampBasic = 0.2f;
+    private float fDampCoeff;   // the selected damping coefficient
     #endregion
 
     #region // Jumping vars
@@ -121,6 +122,9 @@ public class Player : MonoBehaviour
         OnJumpInputDown();
         controller.Move(vVelocity * Time.deltaTime, vDirectionalInput);
 
+        // store last frame velocity
+        vVelocityLastFrame = vVelocity;
+
         if (controller.collisions.above || controller.collisions.below)
         { vVelocity.y = 0f; }
         #endregion
@@ -158,38 +162,20 @@ public class Player : MonoBehaviour
 
     private void CalculateVelocity()
     {
-        float targetVelocityX = vDirectionalInput.x * fMoveSpeed;
+        float targetVelocityX = vDirectionalInput.x * fMaxMoveSpeed;
         bIsGrounded = controller.collisions.below;
 
-        #region // Dampen targetVelocityX
-        if (Mathf.Abs(vDirectionalInput.x) < 0.01f)
-            targetVelocityX = vVelocity.x * Mathf.Pow(1f - fHorizDampStopping, Time.deltaTime * 10f);
-        //else if (Mathf.Sign(vDirectionalInput.x) != Mathf.Sign(vVelocity.x))
-            //targetVelocityX = vVelocity.x * Mathf.Pow(1f - fHorizDampTurning, Time.deltaTime * 10f);  //convert directionalInput to boolean (TRUE if travelling RIGHT) then compare with animTravelLeft (hence TURNING occurs when both bools are TRUE (input RIGHT & travel LEFT))
-        else if (controller.collisions.below == false)
-            targetVelocityX = vVelocity.x * Mathf.Pow(1f - fHorizDampAirborne, Time.deltaTime * 10f);
-        //else
-            //targetVelocityX = vVelocity.x * Mathf.Pow(1f - fHorizDampBasic, Time.deltaTime * 10f);
-        #endregion
+        vVelocity.x = targetVelocityX;
 
-
-        if (bIsGrounded)
-        {
-            vVelocity.x = targetVelocityX;
-        }
-        else
-        {
-            if (Mathf.Abs(vDirectionalInput.x) > 0.2)
-            {    // if you are wanting to actually stop your character with a partial or full controller input
-                if (Mathf.Abs(vVelocity.x) < 0.01)
-                { vVelocity.x = targetVelocityX; }  // if not moving horiz then take normal input
-                else
-                { vVelocity.x = Mathf.Abs(vVelocity.x) * vDirectionalInput.x; } // if moving horiz then maintain velocity and dampen with targetVelocity
-            }
-        }
         if (Mathf.Abs(vVelocity.x) > fMaxMoveSpeed) { vVelocity.x = Mathf.Sign(vDirectionalInput.x) * fMaxMoveSpeed; }
 
-
+        #region //maintain momentum
+        if (!bIsGrounded && Mathf.Abs(vDirectionalInput.x) > 0.2)
+        {
+            // if you are wanting to actually stop your character with a partial or full controller input
+            vVelocity.x = Mathf.Abs(vVelocityLastFrame.x); // if moving horiz then maintain velocity
+        }
+        #endregion
 
         vVelocity.y += fGravity * Time.deltaTime;
 

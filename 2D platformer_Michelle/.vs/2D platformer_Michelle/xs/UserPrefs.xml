@@ -2,9 +2,10 @@
   <MonoDevelop.Ide.ItemProperties.2D_220platformer__Michelle PreferredExecutionTarget="Unity.Editor" />
   <MonoDevelop.Ide.Workbench ActiveDocument="Assets/Scripts/Player.cs">
     <Files>
-      <File FileName="Assets/Scripts/Player.cs" Line="8" Column="7" />
+      <File FileName="Assets/Scripts/Player.cs" Line="166" Column="90" />
       <File FileName="Assets/Scripts/PlayerInput.cs" Line="10" Column="19" />
       <File FileName="Assets/Scripts/RaycastController.cs" Line="21" Column="5" />
+      <File FileName="Assets/Scripts/Controller2D.cs" Line="29" Column="16" NotebookId="1" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
