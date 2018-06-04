@@ -37,19 +37,22 @@ public class Player : MonoBehaviour
     [HideInInspector] public float fJumpRejumpEarlyTime;     // timer for early jump bounce leniency
     [HideInInspector] public float fJumpLedgeEarlyTime;        // timer for off-ledge jump leniency
     public bool bCanDoubleJump;
-    private bool bIsDoubleJumping = false;
+    public bool bIsDoubleJumping = false;
     public bool bIsGrounded = true;
     #endregion
 
     #region // Wall sliding
+    [Header("Wall Slide")]
+    public bool bCanWallSlide;
     private bool bIsWallSliding;
     private int iWallDirX;
     public float fWallSlideSpeedMax = 3f;
     public float fWallStickTime = .25f;
     private float fTimeToWallUnstick;
+    #endregion
+
     // Disable input timer
     private float disableInputTime = 0.0f;
-    #endregion
 
     #region // Dash vars
     [Header("Dash")]
@@ -90,6 +93,7 @@ public class Player : MonoBehaviour
     {
         DisableInput();
         CalculateTimers();
+        ResetSkills();
         CheckDeath();
         CalculateVelocity();
         HandleWallSliding();
@@ -133,6 +137,11 @@ public class Player : MonoBehaviour
         if (controller.collisions.below) { fJumpLedgeEarlyTime = fJumpLedgeLeniency; }    // once grounded, set leniency time and start counting down
 
         if (fTimeSinceDashEnd <= (fDashTime + fDashImpactLeniency)) { fTimeSinceDashEnd += Time.deltaTime; }    // fTimeSinceDashEnd resets when dash starts, hence run this timer until end of dash (fDashTime) + leniency (fDash...Leniency)
+    }
+
+    private void ResetSkills()
+    {
+        if (bIsGrounded) { bIsDoubleJumping = false; }
     }
 
     private void DisableInput()
@@ -246,7 +255,7 @@ public class Player : MonoBehaviour
 
     public void OnJumpInputDown()
     {
-        if (bIsWallSliding && bCallJump)
+        if ((bIsWallSliding || bIsGrounded) && bCallJump)
         {
             if (iWallDirX == vDirectionalInput.x)
             {
@@ -263,7 +272,6 @@ public class Player : MonoBehaviour
                 vVelocity.x = -iWallDirX * vWallLeap.x;
                 vVelocity.y = vWallLeap.y;
             }
-            bIsDoubleJumping = false;
             bCallJump = false;  // end jump call
         }
         if ((fJumpRejumpEarlyTime > 0) && (fJumpLedgeEarlyTime > 0))    // did press within lenient times? (NO END JUMP CALL)
@@ -272,7 +280,6 @@ public class Player : MonoBehaviour
             fJumpLedgeEarlyTime = 0;
 
             vVelocity.y = fMaxJumpVelocity;
-            bIsDoubleJumping = false;
         }
     }
 
@@ -289,7 +296,6 @@ public class Player : MonoBehaviour
         vVelocity.y = fMaxJumpVelocity;
         bIsDoubleJumping = true;
         bCallJump = false;  // end jump call
-        Debug.Log("doublejump");
     }
 
     public void OnDash()
@@ -306,7 +312,7 @@ public class Player : MonoBehaviour
     {
         iWallDirX = (controller.collisions.left) ? -1 : 1;
         bIsWallSliding = false;
-        if ((controller.collisions.left || controller.collisions.right) && !controller.collisions.below && vVelocity.y < 0)
+        if ((controller.collisions.left || controller.collisions.right) && !controller.collisions.below && vVelocity.y < 0 && bCanWallSlide)
         {
             bIsWallSliding = true;
 
@@ -331,6 +337,39 @@ public class Player : MonoBehaviour
             {
                 fTimeToWallUnstick = fWallStickTime;
             }
+        }
+
+        if ((controller.collisions.left || controller.collisions.right) && !controller.collisions.below && vVelocity.y < 0 && !bCanWallSlide)
+        {
+            bIsWallSliding = true;
+            PlayerInput.disableJump = true;
+
+            if (vVelocity.y < -fWallSlideSpeedMax)
+            {
+                vVelocity.y = -fWallSlideSpeedMax;
+            }
+
+            if (fTimeToWallUnstick > 0f)
+            {
+                vVelocity.x = 0f;
+                if (vDirectionalInput.x != iWallDirX && vDirectionalInput.x != 0f)
+                {
+                    fTimeToWallUnstick -= Time.deltaTime;
+                }
+                else
+                {
+                    fTimeToWallUnstick = fWallStickTime;
+                }
+                bIsGrounded = false;
+            }
+            else
+            {
+                fTimeToWallUnstick = fWallStickTime;
+            }
+        }
+        else if (controller.collisions.below && vVelocity.y < 0.01f)    // on landing, re-enable jump
+        {
+            PlayerInput.disableJump = false;
         }
     }
 }
