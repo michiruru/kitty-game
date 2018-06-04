@@ -23,12 +23,19 @@ public class PlayerInput : MonoBehaviour
 
             if (Input.GetButtonDown("Jump"))
             {
-                player.fJumpRejumpEarlyTime = player.fJumpEarlyLeniency;
-                player.bCallJump = true;    // call a jump
+                if (player.bCanDoubleJump && !player.bIsGrounded)   // if ready, do DoubleJump
+                {
+                    player.DoubleJump();
+                }
+                else
+                {
+                    player.fJumpRejumpEarlyTime = player.fJumpEarlyLeniency;
+                    player.bCallJump = true;    // call a jump
+                }
             }
 
             if (Input.GetButtonUp("Jump"))
-            { player.OnJumpInputUp(); }
+            { player.OnJumpInputUp(); } // ensure that jump is AT LEAST the minimum velocity.y
 
             if (Input.GetButtonDown("Dash"))
             {

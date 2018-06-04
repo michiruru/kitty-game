@@ -38,7 +38,7 @@ public class Player : MonoBehaviour
     [HideInInspector] public float fJumpLedgeEarlyTime;        // timer for off-ledge jump leniency
     public bool bCanDoubleJump;
     private bool bIsDoubleJumping = false;
-    private bool bIsGrounded = true;
+    public bool bIsGrounded = true;
     #endregion
 
     #region // Wall sliding
@@ -57,10 +57,12 @@ public class Player : MonoBehaviour
     public bool bCanDirDash = true;
     private bool bIsDashing = false;
     private float fNextDashTime;
-    private float fDashDuration;
-    public float fDashCooldown;
+    private float fDashDuration;    // timer for how long current dash has been running
+    public float fDashCooldown;     // timer for cooldown between dashes
+    private float fTimeSinceDashEnd;    // timer for leniency at end of dash
     private float fDashSpeed = 25f; //25f
     private float fDashTime = 0.2f; //0.2f
+    private float fDashImpactLeniency = 0.2f;  // leniency at end of dash to allow for impact breaking of walls etc.
     #endregion
 
     #region // Animation bools
@@ -129,6 +131,8 @@ public class Player : MonoBehaviour
         fJumpLedgeEarlyTime -= Time.deltaTime;       // leniency for press jump when stepping off ledge
 
         if (controller.collisions.below) { fJumpLedgeEarlyTime = fJumpLedgeLeniency; }    // once grounded, set leniency time and start counting down
+
+        if (fTimeSinceDashEnd <= (fDashTime + fDashImpactLeniency)) { fTimeSinceDashEnd += Time.deltaTime; }    // fTimeSinceDashEnd resets when dash starts, hence run this timer until end of dash (fDashTime) + leniency (fDash...Leniency)
     }
 
     private void DisableInput()
@@ -270,16 +274,6 @@ public class Player : MonoBehaviour
             vVelocity.y = fMaxJumpVelocity;
             bIsDoubleJumping = false;
         }
-        if (bCanDoubleJump && !controller.collisions.below && !bIsDoubleJumping && !bIsWallSliding && bCallJump)
-        {
-            vVelocity.y = fMaxJumpVelocity;
-            bIsDoubleJumping = true;
-            bCallJump = false;  // end jump call
-            Debug.Log("doublejumop");
-        }
-
-
-
     }
 
     public void OnJumpInputUp()
@@ -290,10 +284,19 @@ public class Player : MonoBehaviour
         }
     }
 
+    public void DoubleJump()
+    {
+        vVelocity.y = fMaxJumpVelocity;
+        bIsDoubleJumping = true;
+        bCallJump = false;  // end jump call
+        Debug.Log("doublejump");
+    }
+
     public void OnDash()
     {
         //Debug.Log("dashed");
         fDashDuration = 0.0f;    // reset the current dash timer
+        fTimeSinceDashEnd = 0.0f;    // reset timer since dash end
         bIsDashing = true;         // state dashing
         animDash = true;
         disableInputTime = fDashTime;
