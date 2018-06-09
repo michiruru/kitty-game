@@ -4,44 +4,57 @@ using UnityEngine;
 [RequireComponent(typeof(Controller2D))]
 public class Player : MonoBehaviour
 {
+    //DECLARATIONS
+    #region GameObjects
+    private Controller2D controller;
+    private Animator anim;
+    #endregion
+
+    #region EnviroPhysics
+    [Header("Physics Vars")]
+    public float moveSpeed = 6f;
+    private float gravity;
+    private Vector3 velocity;
+    private float velocityXSmoothing;
+    private Vector2 directionalInput;
+    #endregion
+
+    #region Jump
+    [Header("Jump Vars")]
     public float maxJumpHeight = 4f;
     public float minJumpHeight = 1f;
     public float timeToJumpApex = .4f;
+    private float maxJumpVelocity;
+    private float minJumpVelocity;
     private float accelerationTimeAirborne = .2f;
     private float accelerationTimeGrounded = .1f;
-    public float moveSpeed = 6f;
 
+    public bool canDoubleJump;
+    private bool isDoubleJumping = false;
+    #endregion
+
+    #region WallClimb
+    [Header("WallClimb Vars")]
     public bool canWallJump;
     public Vector2 wallJumpClimb;   //7.5, 16
     public Vector2 wallJumpOff;     //8.5, 7
     public Vector2 wallLeap;        //18, 17
-
-    public bool canDoubleJump;
-    private bool isDoubleJumping = false;
-
+    private bool wallSliding;
+    private int wallDirX;
     public float wallSlideSpeedMax = 3f;
     public float wallStickTime = .25f;
     private float timeToWallUnstick;
+    #endregion
 
-    private float gravity;
-    private float maxJumpVelocity;
-    private float minJumpVelocity;
-    private Vector3 velocity;
-    private float velocityXSmoothing;
-
-    private Controller2D controller;
-    private Vector2 directionalInput;
-    private bool wallSliding;
-    private int wallDirX;
-
+    #region Animation
     [Header("AnimationBools")]
     public bool animTravelLeft;
     public bool animTravelDown;
     public bool animGrounded;
     public bool animDoubleJump;
     public bool animWallClimb;
-
-    private Animator anim;
+    public bool animDash;
+    #endregion
 
     private void Start()
     {
@@ -67,8 +80,6 @@ public class Player : MonoBehaviour
         {
             velocity.y = 0f;
         }
-
-        //CalculateAnimBools();
 
     }
 
