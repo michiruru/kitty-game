@@ -298,5 +298,14 @@ public class Player : MonoBehaviour
         {
             anim.SetBool("wallClimb", false);
         }
+
+        if (animDash)
+        {
+            anim.SetBool("dash", true);
+        }
+        else
+        {
+            anim.SetBool("dash", false);
+        }
     }
 }
