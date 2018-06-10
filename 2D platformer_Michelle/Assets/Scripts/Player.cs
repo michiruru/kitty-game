@@ -218,7 +218,7 @@ public class Player : MonoBehaviour
 
     private void ResetSkills()
     {
-        if (animGrounded && bHasDoubleJumped) {
+        if (animGrounded||wallSliding){// || animGrounded && bHasDoubleJumped || animGrounded && iJumpCount > iMaxJumpCount) {
             //Debug.Log("grounded; reseting double jump"); 
             bHasDoubleJumped = false;
             iJumpCount = 0;
