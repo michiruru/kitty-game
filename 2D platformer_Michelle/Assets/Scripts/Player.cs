@@ -68,7 +68,8 @@ public class Player : MonoBehaviour
 
     #region Animation
     [Header("AnimationBools")]
-    [HideInInspector]    public bool animTravelLeft;
+    [HideInInspector]
+    public bool animTravelLeft;
     [HideInInspector] public bool animTravelDown;
     public bool animGrounded;
     [HideInInspector] public bool animDoubleJump;
@@ -116,14 +117,16 @@ public class Player : MonoBehaviour
 
 
             fDashDuration += Time.deltaTime;
-        }else if(bIsDashing && (fDashDuration >= fDashTime && fDashDuration < 1.1f*fDashTime) ){
+        }
+        else if (bIsDashing && (fDashDuration >= fDashTime && fDashDuration < 1.1f * fDashTime))
+        {
             //vVelocity.x = 0; // reimplementing this causes the player to 'rebound ' in the opposite x-direction
             vVelocity.y = 0;
             bIsDashing = false;
             animDash = false;
         }
         else
-        { bIsDashing = false;              animDash = false;} // just in case, catch and turn off the dash
+        { bIsDashing = false; animDash = false; } // just in case, catch and turn off the dash
         #endregion
 
         #region Apply MOVEMENT
@@ -153,7 +156,7 @@ public class Player : MonoBehaviour
 
     private void CalculateTimers()
     {
-        if(!animGrounded && fJumpLateTimer < fJumpLateLeniency){fJumpLateTimer += Time.deltaTime;}
+        if (!animGrounded && fJumpLateTimer < fJumpLateLeniency) { fJumpLateTimer += Time.deltaTime; }
     }
 
     private void CheckDeath()
