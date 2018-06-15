@@ -4,7 +4,7 @@
 public class PlayerInput : MonoBehaviour
 {
     private Player player;
-    private float nextDashTime;
+    private float nextDashTime; // absolute time that the next dash can occur
 
     [HideInInspector] public static bool disableInput;
     public static float disableInputTime;
@@ -51,6 +51,11 @@ public class PlayerInput : MonoBehaviour
                     player.Dash();
                 }
             }
+        }
+
+        if (Input.GetButtonDown("Reset"))
+        {
+            player.Respawn();
         }
     }
 
