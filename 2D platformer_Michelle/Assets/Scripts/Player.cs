@@ -3,8 +3,16 @@
 [RequireComponent(typeof(Controller2D))]
 public class Player : MonoBehaviour
 {
+    public GameObject NextSpawn;
+
     //DECLARATIONS
     Vector3 vSpawnPoint;
+    #region SkillsBools
+    public bool bCanDoubleJump;
+    public bool canWallJump;
+    public bool bCanDash = true;
+    public bool bCanDirDash = true;
+    #endregion
 
     #region GameObjects
     private Controller2D controller;
@@ -31,17 +39,19 @@ public class Player : MonoBehaviour
     private float fAccelerationTimeGrounded = .1f;
 
     public float fJumpLateLeniency = 0.2f;
-    public float fJumpLateTimer;         // timer to determine how long since !grounded
+    private float fJumpLateTimer;         // timer to determine how long since !grounded
 
-    public bool bCanDoubleJump;
+    public float fFallDelay;    // ~= 2* fJumpLateLeniency : this is the delay before turning on the falling animation (used to hide the flickering when going over small bumps)
+    private float fFallDelayTimer;
+
     public bool bHasDoubleJumped = false;
+    public bool bIsJumping;
     public int iJumpCount = 0;
     public int iMaxJumpCount = 2;
     #endregion
 
     #region WallClimb
     [Header("WallClimb Vars")]
-    public bool canWallJump;
     public Vector2 wallJumpClimb;   //7.5, 16
     public Vector2 wallJumpOff;     //8.5, 7
     public Vector2 wallLeap;        //18, 17
@@ -54,8 +64,6 @@ public class Player : MonoBehaviour
 
     #region Dash vars
     [Header("Dash")]
-    public bool bCanDash = true;
-    public bool bCanDirDash = true;
     private bool bIsDashing = false;
     [HideInInspector] public float fNextDashTime;
     [HideInInspector] public float fDashDuration;    // timer for how long current dash has been running
@@ -84,6 +92,8 @@ public class Player : MonoBehaviour
         fGravity = -(2 * fMaxJumpHeight) / Mathf.Pow(fTimeToJumpApex, 2);
         fMaxJumpVelocity = Mathf.Abs(fGravity) * fTimeToJumpApex;
         fMinJumpVelocity = Mathf.Sqrt(2 * Mathf.Abs(fGravity) * fMinJumpHeight);
+
+        animGrounded = true;
 
         vSpawnPoint = transform.position;
     }
@@ -138,6 +148,8 @@ public class Player : MonoBehaviour
         }
         #endregion
 
+        CalculateAnimFloats();
+
     }
 
     // CALLED FROM UPDATE INITIAL
@@ -148,8 +160,8 @@ public class Player : MonoBehaviour
             //Debug.Log("grounded; reseting double jump"); 
             bHasDoubleJumped = false;
             iJumpCount = 0;
-
             fJumpLateTimer = 0;
+            fFallDelayTimer = 0;
         }
 
     }
@@ -157,6 +169,12 @@ public class Player : MonoBehaviour
     private void CalculateTimers()
     {
         if (!animGrounded && fJumpLateTimer < fJumpLateLeniency) { fJumpLateTimer += Time.deltaTime; }
+
+        if (fJumpLateTimer > fJumpLateLeniency) {   // once timer has been exceeded,
+            bIsJumping = false;     //then turn off the 'jumping' animation. This means that the character anim will not look like it is falling for up to fJumpLeniency seconds (prevention of the falling look when going over tiny bumps)
+        }
+
+        if (!animGrounded && fFallDelayTimer < fFallDelay) { fFallDelayTimer += Time.deltaTime; }
     }
 
     private void CheckDeath()
@@ -172,10 +190,6 @@ public class Player : MonoBehaviour
         float targetVelocityX = vDirectionalInput.x * fMoveSpeed;
         vVelocity.x = Mathf.SmoothDamp(vVelocity.x, targetVelocityX, ref fVelocityXSmoothing, (controller.collisions.below ? fAccelerationTimeGrounded : fAccelerationTimeAirborne));
         vVelocity.y += fGravity * Time.deltaTime;
-
-        anim.SetFloat("velocityX", Mathf.Abs(vVelocity.x));
-        anim.SetFloat("velocityY", Mathf.Abs(vVelocity.y));
-
     }
 
     private void CalculateAnimBools()
@@ -185,7 +199,7 @@ public class Player : MonoBehaviour
         if (vVelocity.x < -0.5) { animTravelLeft = true; }
         if (vVelocity.x > 0.5) { animTravelLeft = false; }
 
-        if (vVelocity.y < 0 && !animGrounded) { animTravelDown = true; }
+        if (vVelocity.y < 0.1 && !animGrounded) { animTravelDown = true; }
         else { animTravelDown = false; }
 
 
@@ -209,39 +223,35 @@ public class Player : MonoBehaviour
         }
 
         if (animTravelDown)
-        {
-            anim.SetBool("falling", true);
-        }
+        {anim.SetBool("falling", true);}
         else { anim.SetBool("falling", false); }
 
         if (animGrounded)
-        {
-            anim.SetBool("grounded", true);
-        }
+        {anim.SetBool("grounded", true);}
         else
-        {
-            anim.SetBool("grounded", false);
-        }
+        {anim.SetBool("grounded", false);}
 
         if (animWallClimb)
-        {
-            anim.SetBool("wallClimb", true);
-        }
+        {anim.SetBool("wallClimb", true);}
         else
-        {
-            anim.SetBool("wallClimb", false);
-        }
+        {anim.SetBool("wallClimb", false);}
 
         if (animDash)
-        {
-            anim.SetBool("dash", true);
-        }
+        {anim.SetBool("dash", true);}
         else
-        {
-            anim.SetBool("dash", false);
-        }
+        {anim.SetBool("dash", false);}
+
+        if (bIsJumping) { anim.SetBool("jumping", true); }
+        else{anim.SetBool("jumping", false);}
     }
 
+    private void CalculateAnimFloats()
+    {
+        anim.SetFloat("velocityX", Mathf.Abs(vVelocity.x));
+        anim.SetFloat("velocityY", (vVelocity.y));
+
+        anim.SetFloat("falltimerdelay", fFallDelayTimer - fFallDelay);
+    }
 
     // CALLED FROM UPDATE CONDITIONALLY
     private void HandleWallSliding()
@@ -288,6 +298,7 @@ public class Player : MonoBehaviour
     {
         if (wallSliding)    // wall sliding jump
         {
+            bIsJumping = true;
             if (wallDirX == vDirectionalInput.x)
             {
                 vVelocity.x = -wallDirX * wallJumpClimb.x;
@@ -306,17 +317,23 @@ public class Player : MonoBehaviour
             iJumpCount++;
             //bHasDoubleJumped = false;
         }
+
         if (fJumpLateTimer < fJumpLateLeniency) // a normal jump
         {
+            Debug.Log("normal jump");
+            bIsJumping = true;
             vVelocity.y = fMaxJumpVelocity;
             iJumpCount++;
 
             fJumpLateTimer = fJumpLateLeniency + 1f;    // override timer (will reset on next grounding)
+            fFallDelayTimer = fFallDelay + 1f;
             //bHasDoubleJumped = false;
             //Debug.Log("normal jump");
         }
+
         if (bCanDoubleJump && !controller.collisions.below && (iJumpCount < iMaxJumpCount) && !wallSliding) // double jump
         {
+            bIsJumping = true;
             vVelocity.y = fMaxJumpVelocity;
             bHasDoubleJumped = true;
             iJumpCount++;
@@ -334,17 +351,20 @@ public class Player : MonoBehaviour
 
     public void Dash()
     {
-        //Debug.Log("dashed");
-        fDashDuration = 0.0f;    // reset the current dash timer
-        fTimeSinceDashEnd = 0.0f;    // reset timer since dash end
-        bIsDashing = true;         // state dashing
-        animDash = true;
-        PlayerInput.disableInputTime = fDashTime;
+        if (bCanDash)
+        {
+            //Debug.Log("dashed");
+            fDashDuration = 0.0f;    // reset the current dash timer
+            fTimeSinceDashEnd = 0.0f;    // reset timer since dash end
+            bIsDashing = true;         // state dashing
+            animDash = true;
+            PlayerInput.disableInputTime = fDashTime;
+        }
     }
 
     public void Respawn()
     {
-        transform.position = vSpawnPoint;
+        transform.position = NextSpawn.transform.position;
         vVelocity.x = vVelocity.y = 0;
     }
 
