@@ -18,7 +18,7 @@ public class DeathBox : MonoBehaviour {
         if (other.name == "Player")
         {
             thePlayer.Respawn();
-            Debug.Log("omg it's the player");
+            //Debug.Log("omg player is ded lulz");
             
         }
     }

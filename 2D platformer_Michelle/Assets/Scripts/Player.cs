@@ -3,10 +3,9 @@
 [RequireComponent(typeof(Controller2D))]
 public class Player : MonoBehaviour
 {
-    public GameObject NextSpawn;
+    public GameObject NextSpawn;    // location of the player spawn point
 
     //DECLARATIONS
-    Vector3 vSpawnPoint;
     #region SkillsBools
     public bool bCanDoubleJump;
     public bool canWallJump;
@@ -52,20 +51,20 @@ public class Player : MonoBehaviour
 
     #region WallClimb
     [Header("WallClimb Vars")]
-    public Vector2 wallJumpClimb;   //7.5, 16
-    public Vector2 wallJumpOff;     //8.5, 7
-    public Vector2 wallLeap;        //18, 17
-    private bool wallSliding;
-    private int wallDirX;
-    [HideInInspector] public float wallSlideSpeedMax = 3f;
-    [HideInInspector] public float wallStickTime = .25f;
-    private float timeToWallUnstick;
+    public Vector2 vWallJumpClimb;   //7.5, 16 values for the ?velocity that char gets on WallJumpClimb
+    public Vector2 vWallJumpOff;     //8.5, 7 (as above)
+    public Vector2 vWallLeap;        //18, 17
+    private bool bIsWallSliding;
+    private int iWallDirX;          // signed direction of wall
+    [HideInInspector] public float fWallSlideSpeedMax = 3f;
+    [HideInInspector] public float fWallStickTime = .25f;   //???
+    private float fTimeToWallUnstick;   //???
     #endregion
 
     #region Dash vars
     [Header("Dash")]
     private bool bIsDashing = false;
-    [HideInInspector] public float fNextDashTime;
+    [HideInInspector] public float fNextDashTime;   // the time at which the next dash can occur (?)
     [HideInInspector] public float fDashDuration;    // timer for how long current dash has been running
     public float fDashCooldown;     // timer for cooldown between dashes
     [HideInInspector] public float fTimeSinceDashEnd;    // timer for leniency at end of dash
@@ -76,13 +75,12 @@ public class Player : MonoBehaviour
 
     #region Animation
     [Header("AnimationBools")]
-    [HideInInspector]
-    public bool animTravelLeft;
+    [HideInInspector] public bool animTravelLeft;
     [HideInInspector] public bool animTravelDown;
-    public bool animGrounded;
+    [HideInInspector] public bool animGrounded;
     [HideInInspector] public bool animDoubleJump;
     [HideInInspector] public bool animWallClimb;
-    public bool animDash;
+    [HideInInspector] public bool animDash;
     #endregion
 
     private void Start()
@@ -94,8 +92,6 @@ public class Player : MonoBehaviour
         fMinJumpVelocity = Mathf.Sqrt(2 * Mathf.Abs(fGravity) * fMinJumpHeight);
 
         animGrounded = true;
-
-        vSpawnPoint = transform.position;
     }
 
     private void Update()
@@ -155,7 +151,7 @@ public class Player : MonoBehaviour
     // CALLED FROM UPDATE INITIAL
     private void ResetSkills()
     {
-        if (animGrounded || wallSliding)
+        if (animGrounded || bIsWallSliding)
         {// || animGrounded && bHasDoubleJumped || animGrounded && iJumpCount > iMaxJumpCount) {
             //Debug.Log("grounded; reseting double jump"); 
             bHasDoubleJumped = false;
@@ -205,7 +201,7 @@ public class Player : MonoBehaviour
 
         animDoubleJump = bHasDoubleJumped && !animGrounded;
 
-        animWallClimb = wallSliding;
+        animWallClimb = bIsWallSliding;
 
         SetAnimator();
     }
@@ -256,33 +252,33 @@ public class Player : MonoBehaviour
     // CALLED FROM UPDATE CONDITIONALLY
     private void HandleWallSliding()
     {
-        wallDirX = (controller.collisions.left) ? -1 : 1;
-        wallSliding = false;
+        iWallDirX = (controller.collisions.left) ? -1 : 1;
+        bIsWallSliding = false;
         if ((controller.collisions.left || controller.collisions.right) && !controller.collisions.below && vVelocity.y < 0)
         {
-            wallSliding = true;
+            bIsWallSliding = true;
 
-            if (vVelocity.y < -wallSlideSpeedMax)
+            if (vVelocity.y < -fWallSlideSpeedMax)
             {
-                vVelocity.y = -wallSlideSpeedMax;
+                vVelocity.y = -fWallSlideSpeedMax;
             }
 
-            if (timeToWallUnstick > 0f)
+            if (fTimeToWallUnstick > 0f)
             {
                 fVelocityXSmoothing = 0f;
                 vVelocity.x = 0f;
-                if (vDirectionalInput.x != wallDirX && vDirectionalInput.x != 0f)
+                if (vDirectionalInput.x != iWallDirX && vDirectionalInput.x != 0f)
                 {
-                    timeToWallUnstick -= Time.deltaTime;
+                    fTimeToWallUnstick -= Time.deltaTime;
                 }
                 else
                 {
-                    timeToWallUnstick = wallStickTime;
+                    fTimeToWallUnstick = fWallStickTime;
                 }
             }
             else
             {
-                timeToWallUnstick = wallStickTime;
+                fTimeToWallUnstick = fWallStickTime;
             }
         }
     }
@@ -296,23 +292,23 @@ public class Player : MonoBehaviour
 
     public void OnJumpInputDown()
     {
-        if (wallSliding)    // wall sliding jump
+        if (bIsWallSliding)    // wall sliding jump
         {
             bIsJumping = true;
-            if (wallDirX == vDirectionalInput.x)
+            if (iWallDirX == vDirectionalInput.x)
             {
-                vVelocity.x = -wallDirX * wallJumpClimb.x;
-                vVelocity.y = wallJumpClimb.y;
+                vVelocity.x = -iWallDirX * vWallJumpClimb.x;
+                vVelocity.y = vWallJumpClimb.y;
             }
             else if (vDirectionalInput.x == 0)
             {
-                vVelocity.x = -wallDirX * wallJumpOff.x;
-                vVelocity.y = wallJumpOff.y;
+                vVelocity.x = -iWallDirX * vWallJumpOff.x;
+                vVelocity.y = vWallJumpOff.y;
             }
             else
             {
-                vVelocity.x = -wallDirX * wallLeap.x;
-                vVelocity.y = wallLeap.y;
+                vVelocity.x = -iWallDirX * vWallLeap.x;
+                vVelocity.y = vWallLeap.y;
             }
             iJumpCount++;
             //bHasDoubleJumped = false;
@@ -320,7 +316,7 @@ public class Player : MonoBehaviour
 
         if (fJumpLateTimer < fJumpLateLeniency) // a normal jump
         {
-            Debug.Log("normal jump");
+            //Debug.Log("normal jump");
             bIsJumping = true;
             vVelocity.y = fMaxJumpVelocity;
             iJumpCount++;
@@ -331,7 +327,7 @@ public class Player : MonoBehaviour
             //Debug.Log("normal jump");
         }
 
-        if (bCanDoubleJump && !controller.collisions.below && (iJumpCount < iMaxJumpCount) && !wallSliding) // double jump
+        if (bCanDoubleJump && !controller.collisions.below && (iJumpCount < iMaxJumpCount) && !bIsWallSliding) // double jump
         {
             bIsJumping = true;
             vVelocity.y = fMaxJumpVelocity;
@@ -367,10 +363,4 @@ public class Player : MonoBehaviour
         transform.position = NextSpawn.transform.position;
         vVelocity.x = vVelocity.y = 0;
     }
-
-
-
-
-
-
 }
