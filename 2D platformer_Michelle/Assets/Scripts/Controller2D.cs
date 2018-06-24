@@ -6,6 +6,9 @@ public class Controller2D : RaycastController
     private float maxClimbAngle = 60f;
     private float maxDescendAngle = 60f;
 
+    public static string sCollisionWithHoriz;
+    public static string sCollisionWithVert;
+
     public CollisionInfo collisions;
     [HideInInspector] public Vector2 playerInput;
 
@@ -73,6 +76,7 @@ public class Controller2D : RaycastController
 
             if (hit)
             {
+                sCollisionWithHoriz = hit.collider.tag;
                 if (hit.distance == 0)
                 {
                     continue;
@@ -95,6 +99,10 @@ public class Controller2D : RaycastController
                     }
                     ClimbSlope(ref moveAmount, slopeAngle);
                     moveAmount.x += distanceToSlopeStart * directionX;
+                }
+                else
+                {
+                    //sCollisionWithHoriz = null;
                 }
 
                 if (!collisions.climbingSlope || slopeAngle > maxClimbAngle)
@@ -174,6 +182,8 @@ public class Controller2D : RaycastController
 
             if (hit)
             {
+                sCollisionWithVert = hit.collider.tag;
+
                 if (hit.collider.tag == "Through")
                 {
                     if (directionY == 1 || hit.distance == 0)
@@ -190,6 +200,10 @@ public class Controller2D : RaycastController
                         Invoke("ResetFallingThroughPlatform", fallingThroughPlatformResetTimer);
                         continue;
                     }
+                }
+                else
+                {
+                    sCollisionWithVert = null;
                 }
                 moveAmount.y = (hit.distance - skinWidth) * directionY;
                 rayLength = hit.distance;

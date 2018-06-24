@@ -25,6 +25,8 @@ public class Player : MonoBehaviour
     private Vector3 vVelocity;
     private float fVelocityXSmoothing;
     private Vector2 vDirectionalInput;
+    public string sColliderTagHoriz;
+    public string sColliderTagVert;
     #endregion
 
     #region Jump
@@ -81,6 +83,8 @@ public class Player : MonoBehaviour
     [HideInInspector] public bool animDoubleJump;
     [HideInInspector] public bool animWallClimb;
     [HideInInspector] public bool animDash;
+    [HideInInspector] public bool animFalse;
+
     #endregion
 
     private void Start()
@@ -101,7 +105,9 @@ public class Player : MonoBehaviour
         //CheckDeath();
         CalculateVelocity();
 
-        if (canWallJump) { HandleWallSliding(); }
+        CheckCollision();
+
+        if (canWallJump && (sColliderTagHoriz == "Wall" || sColliderTagVert =="Wall")) { HandleWallSliding(); }
 
         CalculateAnimBools();
 
@@ -188,6 +194,13 @@ public class Player : MonoBehaviour
         vVelocity.y += fGravity * Time.deltaTime;
     }
 
+    private void CheckCollision()
+    {
+        sColliderTagHoriz = Controller2D.sCollisionWithHoriz;
+        sColliderTagVert = Controller2D.sCollisionWithVert;
+    }
+
+
     private void CalculateAnimBools()
     {
         animGrounded = controller.collisions.below;
@@ -208,6 +221,9 @@ public class Player : MonoBehaviour
 
     public void SetAnimator()
     {
+        animFalse = false;
+        anim.SetBool("disable", animFalse);
+
         if (animTravelLeft)
         {
             transform.localScale = new Vector3(-1f, 1f, 1f);
