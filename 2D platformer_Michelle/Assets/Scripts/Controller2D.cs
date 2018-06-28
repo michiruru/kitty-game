@@ -184,6 +184,7 @@ public class Controller2D : RaycastController
             {
                 sCollisionWithVert = hit.collider.tag;
 
+       
                 if (hit.collider.tag == "Through")
                 {
                     if (directionY == 1 || hit.distance == 0)

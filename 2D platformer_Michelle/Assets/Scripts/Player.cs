@@ -75,6 +75,13 @@ public class Player : MonoBehaviour
     public float fDashImpactLeniency = 0.2f;  // leniency at end of dash to allow for impact breaking of walls etc.
     #endregion
 
+    #region EnviroInteractions
+    [Header("Ladder Climb")]
+    public bool bOnLadder;
+    public float climbSpeed;
+    private float gravityStore;
+    #endregion
+
     #region Animation
     [Header("AnimationBools")]
     [HideInInspector] public bool animTravelLeft;
@@ -84,6 +91,7 @@ public class Player : MonoBehaviour
     [HideInInspector] public bool animWallClimb;
     [HideInInspector] public bool animDash;
     [HideInInspector] public bool animFalse;
+    [HideInInspector] public bool animOnLadder;
 
     #endregion
 
@@ -94,6 +102,7 @@ public class Player : MonoBehaviour
         fGravity = -(2 * fMaxJumpHeight) / Mathf.Pow(fTimeToJumpApex, 2);
         fMaxJumpVelocity = Mathf.Abs(fGravity) * fTimeToJumpApex;
         fMinJumpVelocity = Mathf.Sqrt(2 * Mathf.Abs(fGravity) * fMinJumpHeight);
+        gravityStore = fGravity;
 
         animGrounded = true;
     }
@@ -110,6 +119,9 @@ public class Player : MonoBehaviour
         if (canWallJump && (sColliderTagHoriz == "Wall" || sColliderTagVert =="Wall")) { HandleWallSliding(); }
 
         CalculateAnimBools();
+
+
+        if (bOnLadder) { LadderClimb(); }
 
         #region Dash code
         if (bIsDashing && fDashDuration < fDashTime)
@@ -253,6 +265,12 @@ public class Player : MonoBehaviour
         else
         {anim.SetBool("dash", false);}
 
+        if (animOnLadder)
+        {
+            anim.SetBool("onLadder", true);
+        }
+        else { anim.SetBool("onLadder", false); }
+
         if (bIsJumping) { anim.SetBool("jumping", true); }
         else{anim.SetBool("jumping", false);}
     }
@@ -378,5 +396,41 @@ public class Player : MonoBehaviour
     {
         transform.position = NextSpawn.transform.position;
         vVelocity.x = vVelocity.y = 0;
+    }
+
+    public void LadderClimb()
+    {
+        float climbVelocityX;
+        float climbVelocityY;
+
+        fGravity = 0;
+        climbVelocityX = climbSpeed * Input.GetAxisRaw("Horizontal");
+        //vVelocity.x = 0;
+        climbVelocityY = climbSpeed * Input.GetAxisRaw("Vertical");
+        vVelocity = new Vector2(climbVelocityX, climbVelocityY);
+
+    }
+
+    public void OnTriggerEnter2D(Collider2D collider)
+    {
+        if(collider.transform.tag == "Ladder")
+        {
+            Debug.Log("I'm on a ladder bitch");
+            bOnLadder = true;
+            animOnLadder = true;
+
+        }
+    }
+
+    public void OnTriggerExit2D(Collider2D collider)
+    {
+        if(collider.transform.tag == "Ladder")
+        {
+            bOnLadder = false;
+            animOnLadder = false;
+
+            fGravity = gravityStore;
+
+        }
     }
 }
