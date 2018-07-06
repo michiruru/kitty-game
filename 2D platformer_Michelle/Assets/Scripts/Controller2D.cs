@@ -61,6 +61,8 @@ public class Controller2D : RaycastController
         float directionX = collisions.faceDir;
         float rayLength = Mathf.Abs(moveAmount.x) + skinWidth;
 
+        int iQtyHit = 0;
+
         if (Mathf.Abs(moveAmount.x) < skinWidth)
         {
             rayLength = 2 * skinWidth;
@@ -74,8 +76,10 @@ public class Controller2D : RaycastController
 
             Debug.DrawRay(rayOrigin, Vector2.right * directionX, Color.red);
 
+
             if (hit)
             {
+                iQtyHit++;
                 sCollisionWithHoriz = hit.collider.tag;
                 if (hit.distance == 0)
                 {
@@ -100,10 +104,7 @@ public class Controller2D : RaycastController
                     ClimbSlope(ref moveAmount, slopeAngle);
                     moveAmount.x += distanceToSlopeStart * directionX;
                 }
-                else
-                {
-                    //sCollisionWithHoriz = null;
-                }
+
 
                 if (!collisions.climbingSlope || slopeAngle > maxClimbAngle)
                 {
@@ -118,6 +119,15 @@ public class Controller2D : RaycastController
                     collisions.left = directionX == -1;
                     collisions.right = directionX == 1;
                 }
+            }
+
+            if (iQtyHit == 0)
+            {
+                //Debug.Log("hit with " + iQtyHit + " rays.");
+                sCollisionWithHoriz = null;
+            }
+            else
+            { //Debug.Log("hit with " + iQtyHit + " rays on " + sCollisionWithHoriz); 
             }
         }
     }
@@ -184,7 +194,7 @@ public class Controller2D : RaycastController
             {
                 sCollisionWithVert = hit.collider.tag;
 
-       
+
                 if (hit.collider.tag == "Through")
                 {
                     if (directionY == 1 || hit.distance == 0)

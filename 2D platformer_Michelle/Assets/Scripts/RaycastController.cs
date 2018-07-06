@@ -9,7 +9,7 @@ public class RaycastController : MonoBehaviour
     private const float dstBetweenRays = .25f;
 
     [HideInInspector]
-    public int horizontalRayCount;
+    public static int horizontalRayCount;
     [HideInInspector]
     public int verticalRayCount;
 

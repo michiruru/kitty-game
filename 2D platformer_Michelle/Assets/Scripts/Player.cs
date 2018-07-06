@@ -8,7 +8,7 @@ public class Player : MonoBehaviour
     //DECLARATIONS
     #region SkillsBools
     public bool bCanDoubleJump;
-    public bool canWallJump;
+    public bool bCanWallClimb;
     public bool bCanDash = true;
     public bool bCanDirDash = true;
     #endregion
@@ -84,15 +84,16 @@ public class Player : MonoBehaviour
 
     #region Animation
     [Header("AnimationBools")]
-    [HideInInspector] public bool animTravelLeft;
-    [HideInInspector] public bool animTravelDown;
-    [HideInInspector] public bool animGrounded;
-    [HideInInspector] public bool animDoubleJump;
-    [HideInInspector] public bool animWallClimb;
-    [HideInInspector] public bool animDash;
-    [HideInInspector] public bool animFalse;
-    [HideInInspector] public bool animOnLadder;
-
+    
+    public bool animTravelLeft;
+     public bool animTravelDown;
+     public bool animGrounded;
+     public bool animDoubleJump;
+     public bool animWallClimb;
+     public bool animDash;
+     public bool animFalse;
+     public bool animOnLadder;
+    public bool animOnWall;
     #endregion
 
     private void Start()
@@ -116,7 +117,9 @@ public class Player : MonoBehaviour
 
         CheckCollision();
 
-        if (canWallJump && (sColliderTagHoriz == "Wall" || sColliderTagVert =="Wall")) { HandleWallSliding(); }
+       if (bCanWallClimb) { HandleWallSliding(); }
+
+
 
         CalculateAnimBools();
 
@@ -184,7 +187,8 @@ public class Player : MonoBehaviour
     {
         if (!animGrounded && fJumpLateTimer < fJumpLateLeniency) { fJumpLateTimer += Time.deltaTime; }
 
-        if (fJumpLateTimer > fJumpLateLeniency) {   // once timer has been exceeded,
+        if (fJumpLateTimer > fJumpLateLeniency)
+        {   // once timer has been exceeded,
             bIsJumping = false;     //then turn off the 'jumping' animation. This means that the character anim will not look like it is falling for up to fJumpLeniency seconds (prevention of the falling look when going over tiny bumps)
         }
 
@@ -212,10 +216,15 @@ public class Player : MonoBehaviour
         sColliderTagVert = Controller2D.sCollisionWithVert;
     }
 
-
     private void CalculateAnimBools()
     {
         animGrounded = controller.collisions.below;
+
+        if (sColliderTagHoriz == "Wall" && bCanWallClimb)
+        { animOnWall = true; }
+        else
+        { animOnWall = false; }
+
 
         if (vVelocity.x < -0.5) { animTravelLeft = true; }
         if (vVelocity.x > 0.5) { animTravelLeft = false; }
@@ -227,6 +236,8 @@ public class Player : MonoBehaviour
         animDoubleJump = bHasDoubleJumped && !animGrounded;
 
         animWallClimb = bIsWallSliding;
+
+        animOnLadder = bOnLadder;
 
         SetAnimator();
     }
@@ -247,32 +258,41 @@ public class Player : MonoBehaviour
         }
 
         if (animTravelDown)
-        {anim.SetBool("falling", true);}
-        else { anim.SetBool("falling", false); }
+        { anim.SetBool("falling", true); }
+        else
+        { anim.SetBool("falling", false); }
 
         if (animGrounded)
-        {anim.SetBool("grounded", true);}
+        { anim.SetBool("grounded", true); }
         else
-        {anim.SetBool("grounded", false);}
+        { anim.SetBool("grounded", false); }
+
+        if (animOnWall)
+        { anim.SetBool("onWall", true); }
+        else
+        { anim.SetBool("onWall", false); }
 
         if (animWallClimb)
-        {anim.SetBool("wallClimb", true);}
+        { anim.SetBool("wallClimb", true); }
         else
-        {anim.SetBool("wallClimb", false);}
+        { anim.SetBool("wallClimb", false); }
 
         if (animDash)
-        {anim.SetBool("dash", true);}
+        { anim.SetBool("dash", true); }
         else
-        {anim.SetBool("dash", false);}
+        { anim.SetBool("dash", false); }
 
         if (animOnLadder)
-        {
-            anim.SetBool("onLadder", true);
-        }
-        else { anim.SetBool("onLadder", false); }
+        { anim.SetBool("onLadder", true); }
+        else
+        { anim.SetBool("onLadder", false); }
 
-        if (bIsJumping) { anim.SetBool("jumping", true); }
-        else{anim.SetBool("jumping", false);}
+        if (bIsJumping)
+        { anim.SetBool("jumping", true); }
+        else
+        { anim.SetBool("jumping", false); }
+
+
     }
 
     private void CalculateAnimFloats()
@@ -288,6 +308,7 @@ public class Player : MonoBehaviour
     {
         iWallDirX = (controller.collisions.left) ? -1 : 1;
         bIsWallSliding = false;
+
         if ((controller.collisions.left || controller.collisions.right) && !controller.collisions.below && vVelocity.y < 0)
         {
             bIsWallSliding = true;
@@ -413,24 +434,31 @@ public class Player : MonoBehaviour
 
     public void OnTriggerEnter2D(Collider2D collider)
     {
-        if(collider.transform.tag == "Ladder")
+        if (collider.transform.tag == "Ladder")
         {
             Debug.Log("I'm on a ladder bitch");
             bOnLadder = true;
-            animOnLadder = true;
-
         }
     }
 
     public void OnTriggerExit2D(Collider2D collider)
     {
-        if(collider.transform.tag == "Ladder")
+        if (collider.transform.tag == "Ladder")
         {
             bOnLadder = false;
-            animOnLadder = false;
-
             fGravity = gravityStore;
 
         }
     }
+
+
+    void Awake()
+    {
+#if UNITY_EDITOR
+        Time.timeScale = 1f;
+        //QualitySettings.vSyncCount = 0;  // VSync must be disabled
+        //Application.targetFrameRate = 10;
+#endif
+    }
+
 }
