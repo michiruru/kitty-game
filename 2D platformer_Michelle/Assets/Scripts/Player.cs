@@ -430,6 +430,14 @@ public class Player : MonoBehaviour
         climbVelocityY = climbSpeed * Input.GetAxisRaw("Vertical");
         vVelocity = new Vector2(climbVelocityX, climbVelocityY);
 
+        if(climbVelocityY > 0)
+        {
+            anim.speed = 1;
+        }
+        else
+        {
+            anim.speed = 0;
+        }
     }
 
     public void OnTriggerEnter2D(Collider2D collider)
@@ -455,7 +463,7 @@ public class Player : MonoBehaviour
     void Awake()
     {
 #if UNITY_EDITOR
-        Time.timeScale = 1f;
+        //Time.timeScale = 0.4f;
         //QualitySettings.vSyncCount = 0;  // VSync must be disabled
         //Application.targetFrameRate = 10;
 #endif
