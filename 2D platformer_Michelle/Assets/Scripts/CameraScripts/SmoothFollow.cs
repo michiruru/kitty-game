@@ -54,7 +54,7 @@ public class SmoothFollow : MonoBehaviour
             currentPos = Mathf.Lerp(currentPos, wantedPos, translationalTightness * Time.deltaTime);
 
             // Damp the zoom
-            Debug.Log("change from :" + fCurrentSize + " to " + fWantedSize);
+            //Debug.Log("change from :" + fCurrentSize + " to " + fWantedSize);
             fCurrentSize = Mathf.Lerp(fCurrentSize, fWantedSize, fZoomTightness * Time.deltaTime);
 
             // Set the position of the camera on the x-z plane to:
