@@ -7,11 +7,11 @@ public class SmoothFollow : MonoBehaviour
     public Camera thisCamera;
     public Transform target; // The target we are following
     public bool bIsfollowing;
-   private float distance = 10.0f;  // The distance in the x-z plane to the target (AP no idea what this does. Leave it as 10?)
+    private float distance = 10.0f;  // The distance in the x-z plane to the target (AP no idea what this does. Leave it as 10?)
 
 
-    public float fOffsetY = 4.0f; // the height we want the camera to be above the target
-    public float fOffsetX = 3.5f; // the height we want the camera to be rightwards of the target
+    public float fOffsetY = 0f; // the height we want the camera to be above the target
+    public float fOffsetX = 0f; // the height we want the camera to be rightwards of the target
 
     public float heightTightness = 2.0f;
     public float translationalTightness = 2.0f;
@@ -20,7 +20,6 @@ public class SmoothFollow : MonoBehaviour
     float currentHeight;
     float wantedPos;
     float currentPos;
-
 
     // Camera zoom areas
     public float fWantedSize;
@@ -33,7 +32,6 @@ public class SmoothFollow : MonoBehaviour
     {
         fWantedSize = 10.0f;
     }
-
 
     void LateUpdate()
     {
@@ -65,7 +63,7 @@ public class SmoothFollow : MonoBehaviour
             // Set the camera
             transform.position = new Vector3(currentPos, currentHeight, transform.position.z);
             thisCamera.orthographicSize = fCurrentSize;
-         }
+        }
     }
 
     private void OnTriggerEnter2D(Collider2D other)

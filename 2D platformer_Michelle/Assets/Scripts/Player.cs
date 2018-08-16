@@ -3,7 +3,7 @@
 [RequireComponent(typeof(Controller2D))]
 public class Player : MonoBehaviour
 {
-    public GameObject NextSpawn;    // location of the player spawn point
+    public Vector3 PlayerCheckpoint = new Vector3(-16.54f, 4.35f,-1f);    // location of the player checkpoint
 
     //DECLARATIONS
     #region SkillsBools
@@ -199,7 +199,7 @@ public class Player : MonoBehaviour
     {
         if (controller.transform.position.y < -10)
         {
-            Respawn();
+            Respawn(PlayerCheckpoint);
         }
     }
 
@@ -413,9 +413,9 @@ public class Player : MonoBehaviour
         }
     }
 
-    public void Respawn()
+    public void Respawn(Vector3 vSpawnPosition)
     {
-        transform.position = NextSpawn.transform.position;
+        transform.position = vSpawnPosition;
         vVelocity.x = vVelocity.y = 0;
     }
 

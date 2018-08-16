@@ -1,4 +1,7 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
 
 [RequireComponent(typeof(Player))]
 public class PlayerInput : MonoBehaviour
@@ -10,11 +13,20 @@ public class PlayerInput : MonoBehaviour
     public static float disableInputTime;
     [HideInInspector] public static bool disableJump;
 
+    public GameObject[] spawnPoints;
+
+    public bool bLookForSequence = false;
+    private float fSequenceNextTime;
+    public int iSequenceLocation;
+    public string[] sSequence;
+
     private void Start()
     {
         player = GetComponent<Player>();
         disableInput = false;
         disableJump = false;
+
+        sSequence = new string[2];  // length of sequence input
     }
 
     private void Update()
@@ -55,8 +67,37 @@ public class PlayerInput : MonoBehaviour
 
         if (Input.GetButtonDown("Reset"))
         {
-            player.Respawn();
+            //Reset sequence
+            for (int i = 0; i < sSequence.Length; i++)
+            {
+                sSequence[i] = "NA";
+            }
+
+            iSequenceLocation = 0;
+            bLookForSequence = true;
+            fSequenceNextTime = Time.time + Time.deltaTime;
+
+            //player.Respawn(new Vector3(0,0,0));
         }
+
+        if (bLookForSequence && Time.time > fSequenceNextTime)
+        {
+            if (Input.anyKeyDown)
+            {
+                sSequence[iSequenceLocation] = Input.inputString;
+                iSequenceLocation++;
+                fSequenceNextTime = Time.time + Time.deltaTime;
+            }
+
+            if(iSequenceLocation >= sSequence.Length)
+            {
+                //Debug.Log("sequence full");
+                bLookForSequence = false;
+
+                DoRespawn();
+            }
+        }
+
     }
 
     private void CheckDisableInput()
@@ -73,4 +114,38 @@ public class PlayerInput : MonoBehaviour
     {
         if (player.fTimeSinceDashEnd <= (player.fDashTime + player.fDashImpactLeniency)) { player.fTimeSinceDashEnd += Time.deltaTime; }    // fTimeSinceDashEnd resets when dash starts, hence run this timer until end of dash (fDashTime) + leniency (fDash...Leniency)
     }
+
+  private void DoRespawn()
+    {
+        string input = sSequence[0] + sSequence[1];
+
+        switch (input)
+        {
+            case "00":
+                player.Respawn(spawnPoints[0].transform.position);
+                break;
+
+            case "01":
+                player.Respawn(spawnPoints[1].transform.position);
+                break;
+
+            case "02":
+                player.Respawn(spawnPoints[2].transform.position);
+                break;
+
+            case "03":
+                player.Respawn(spawnPoints[3].transform.position);
+                break;
+
+            case "04":
+                player.Respawn(spawnPoints[4].transform.position);
+                break;
+
+            default:
+                break;
+
+        }
+    }
+    
+
 }
