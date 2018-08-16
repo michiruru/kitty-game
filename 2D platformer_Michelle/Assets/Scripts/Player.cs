@@ -220,7 +220,7 @@ public class Player : MonoBehaviour
     {
         animGrounded = controller.collisions.below;
 
-        if (sColliderTagHoriz == "Wall" && bCanWallClimb)
+        if (sColliderTagHoriz == "Wall")// && bCanWallClimb)
         { animOnWall = true; }
         else
         { animOnWall = false; }
