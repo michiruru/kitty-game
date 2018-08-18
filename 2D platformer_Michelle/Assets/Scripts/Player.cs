@@ -75,6 +75,14 @@ public class Player : MonoBehaviour
     public float fDashImpactLeniency = 0.2f;  // leniency at end of dash to allow for impact breaking of walls etc.
     #endregion
 
+    #region Attack
+    [Header("Attacks")]
+    public bool bisAttacking;
+    public float attackTime;
+    private float attackTimeCounter;
+    #endregion
+
+
     #region EnviroInteractions
     [Header("Ladder Climb")]
     public bool bOnLadder;
@@ -94,6 +102,7 @@ public class Player : MonoBehaviour
      public bool animFalse;
      public bool animOnLadder;
     public bool animOnWall;
+    public bool animAttacking;
     #endregion
 
     private void Start()
@@ -193,6 +202,17 @@ public class Player : MonoBehaviour
         }
 
         if (!animGrounded && fFallDelayTimer < fFallDelay) { fFallDelayTimer += Time.deltaTime; }
+
+
+        if (attackTimeCounter > 0)
+        {
+            attackTimeCounter -= Time.deltaTime;
+        }
+
+        if (attackTimeCounter <= 0)
+        {
+            bisAttacking = false;
+        }
     }
 
     private void CheckDeath()
@@ -238,6 +258,8 @@ public class Player : MonoBehaviour
         animWallClimb = bIsWallSliding;
 
         animOnLadder = bOnLadder;
+
+        animAttacking = bisAttacking;
 
         SetAnimator();
     }
@@ -292,6 +314,11 @@ public class Player : MonoBehaviour
         else
         { anim.SetBool("jumping", false); }
 
+        if (animAttacking)
+        {
+            anim.SetBool("attacking", true);
+        }
+        else { anim.SetBool("attacking", false); }
 
     }
 
@@ -438,6 +465,13 @@ public class Player : MonoBehaviour
         {
             anim.speed = 0;
         }
+    }
+
+    public void Attack()
+    {
+        attackTimeCounter = attackTime;
+        bisAttacking = true;
+
     }
 
     public void OnTriggerEnter2D(Collider2D collider)

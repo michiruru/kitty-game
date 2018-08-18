@@ -80,6 +80,11 @@ public class PlayerInput : MonoBehaviour
             //player.Respawn(new Vector3(0,0,0));
         }
 
+        if(Input.GetButtonDown("Fire1"))
+        {
+            player.Attack();
+        }
+
         if (bLookForSequence && Time.time > fSequenceNextTime)
         {
             if (Input.anyKeyDown)
