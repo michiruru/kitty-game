@@ -42,7 +42,7 @@ public class PlayerInput : MonoBehaviour
 
             if (!disableJump)
             {
-                {
+                
                     if (Input.GetButtonDown("Jump"))
                     {
                         player.OnJumpInputDown();
@@ -52,7 +52,7 @@ public class PlayerInput : MonoBehaviour
                     {
                         player.OnJumpInputUp();
                     }
-                }
+
             }
 
             if (Input.GetButtonDown("Dash"))
@@ -63,8 +63,14 @@ public class PlayerInput : MonoBehaviour
                     player.Dash();
                 }
             }
+        
+            if (Input.GetButtonDown("Fire1"))
+            {
+                player.Attack();
+            }
         }
 
+        //DEBUG KEY INPUTS REGION
         if (Input.GetButtonDown("Reset"))
         {
             //Reset sequence
@@ -80,9 +86,24 @@ public class PlayerInput : MonoBehaviour
             //player.Respawn(new Vector3(0,0,0));
         }
 
-        if(Input.GetButtonDown("Fire1"))
+        if (Input.GetButtonDown("HurtPlayer"))
         {
-            player.Attack();
+            player.HurtPlayer(10f);
+        }
+
+        if (Input.GetButtonDown("HealPlayer"))
+        {
+            player.HurtPlayer(-10f);
+        }
+
+        if(Input.GetButtonDown("GainHeart"))
+        {
+            player.ChangePlayerHealth(20f);
+        }
+
+        if(Input.GetButtonDown("LoseHeart"))
+        {
+            player.ChangePlayerHealth(-20f);
         }
 
         if (bLookForSequence && Time.time > fSequenceNextTime)

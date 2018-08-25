@@ -3,9 +3,14 @@
 [RequireComponent(typeof(Controller2D))]
 public class Player : MonoBehaviour
 {
-    public Vector3 PlayerCheckpoint = new Vector3(-16.54f, 4.35f,-1f);    // location of the player checkpoint
+    public Vector3 PlayerCheckpoint = new Vector3(-16.54f, 4.35f, 0f);    // location of the player checkpoint
 
     //DECLARATIONS
+    #region PlayerStats
+    public float fPlayerMaxHealth;
+    public float fPlayerCurrentHealth;
+    #endregion
+
     #region SkillsBools
     public bool bCanDoubleJump;
     public bool bCanWallClimb;
@@ -115,6 +120,9 @@ public class Player : MonoBehaviour
         gravityStore = fGravity;
 
         animGrounded = true;
+
+        fPlayerMaxHealth = 80f;
+        fPlayerCurrentHealth = 80f;
     }
 
     private void Update()
@@ -474,6 +482,36 @@ public class Player : MonoBehaviour
 
     }
 
+    public void HurtPlayer(float amountHurtPlayer)
+    {
+        fPlayerCurrentHealth -= amountHurtPlayer;
+
+        if (fPlayerCurrentHealth >= fPlayerMaxHealth) { fPlayerCurrentHealth = fPlayerMaxHealth; }
+
+        if (fPlayerCurrentHealth <= 0f)
+        {
+            fPlayerCurrentHealth = 0f;
+            //die
+        }
+
+        UI.UpdateHealth(fPlayerCurrentHealth / fPlayerMaxHealth);
+    }
+
+    public void ChangePlayerHealth(float amountIncreaseMaxHealth)
+    {
+        //collect n number of heart pieces ...
+        fPlayerMaxHealth += amountIncreaseMaxHealth;    // increase max health
+        UI.UpdateNumberOfHearts();                      // update number of accessible hearts
+
+        fPlayerCurrentHealth = fPlayerMaxHealth;        // heal player to max
+        UI.UpdateHealth(fPlayerCurrentHealth / fPlayerMaxHealth);   // update those hearts/health
+    }
+
+
+
+
+
+
     public void OnTriggerEnter2D(Collider2D collider)
     {
         if (collider.transform.tag == "Ladder")
@@ -489,9 +527,9 @@ public class Player : MonoBehaviour
         {
             bOnLadder = false;
             fGravity = gravityStore;
-
         }
     }
+
 
 
     void Awake()
