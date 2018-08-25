@@ -36,13 +36,20 @@ public class UI : MonoBehaviour {
         float numberOfHeart = Mathf.Ceil(percentagehealth * fHealthAccessibleHearts);
         Debug.Log(numberOfHeart);
 
-        for (int i = 0; i < fHealthArraySize; i++)
+        for (int i = 0; i < fHealthArraySize; i++)  // removing all hearts
         {
             HeartsArray[i].SetActive(false);
         }
-        for (int i = 0; i < numberOfHeart; i++)
+
+        for (int i = 0; i < fHealthAccessibleHearts; i++)   // set available hearts to grey
         {
             HeartsArray[i].SetActive(true);
+            HeartsArray[i].GetComponent<Image>().color = new Color(128, 128, 128);
+        }
+
+        for (int i = 0; i < numberOfHeart; i++) // set the correct hearts to red
+        {
+            HeartsArray[i].GetComponent<Image>().color = new Color(255, 0, 0);
         }
 
 
