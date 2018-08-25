@@ -44,12 +44,12 @@ public class UI : MonoBehaviour {
         for (int i = 0; i < fHealthAccessibleHearts; i++)   // set available hearts to grey
         {
             HeartsArray[i].SetActive(true);
-            HeartsArray[i].GetComponent<Image>().color = new Color(128, 128, 128);
+            HeartsArray[i].GetComponent<Image>().color = new Color(0.5f, 0.5f, 0.5f, 1);
         }
 
         for (int i = 0; i < numberOfHeart; i++) // set the correct hearts to red
         {
-            HeartsArray[i].GetComponent<Image>().color = new Color(255, 0, 0);
+            HeartsArray[i].GetComponent<Image>().color = new Color(1, 0, 0, 1);
         }
 
 
