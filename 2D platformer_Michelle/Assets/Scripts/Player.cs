@@ -85,6 +85,9 @@ public class Player : MonoBehaviour
     public bool bisAttacking;
     public float attackTime;
     private float attackTimeCounter;
+    public bool bisHurt;
+    public float hurtTime;
+    private float hurtTimeCounter;
     #endregion
 
 
@@ -108,6 +111,7 @@ public class Player : MonoBehaviour
      public bool animOnLadder;
     public bool animOnWall;
     public bool animAttacking;
+    public bool animHurt;
     #endregion
 
     private void Start()
@@ -221,11 +225,26 @@ public class Player : MonoBehaviour
         {
             bisAttacking = false;
         }
+
+        if (hurtTimeCounter > 0)
+        {
+            hurtTimeCounter -= Time.deltaTime;
+        }
+
+        if (hurtTimeCounter <= 0)
+        {
+            bisHurt = false;
+        }
     }
 
     private void CheckDeath()
     {
         if (controller.transform.position.y < -10)
+        {
+            Respawn(PlayerCheckpoint);
+        }
+
+        if (fPlayerCurrentHealth <= 0)
         {
             Respawn(PlayerCheckpoint);
         }
@@ -268,6 +287,8 @@ public class Player : MonoBehaviour
         animOnLadder = bOnLadder;
 
         animAttacking = bisAttacking;
+
+        animHurt = bisHurt;
 
         SetAnimator();
     }
@@ -327,6 +348,15 @@ public class Player : MonoBehaviour
             anim.SetBool("attacking", true);
         }
         else { anim.SetBool("attacking", false); }
+
+        if (animHurt)
+        {
+            anim.SetBool("hurt", true);
+        }
+        else
+        {
+            anim.SetBool("hurt", false);
+        }
 
     }
 
@@ -495,6 +525,9 @@ public class Player : MonoBehaviour
         }
 
         UI.UpdateHealth(fPlayerCurrentHealth / fPlayerMaxHealth);
+
+        bisHurt = true;
+        hurtTimeCounter = hurtTime;
     }
 
     public void ChangePlayerHealth(float amountIncreaseMaxHealth)
