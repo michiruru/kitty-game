@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-
 [RequireComponent(typeof(Player))]
 public class PlayerInput : MonoBehaviour
 {
@@ -19,6 +18,21 @@ public class PlayerInput : MonoBehaviour
     private float fSequenceNextTime;
     public int iSequenceLocation;
     public string[] sSequence;
+
+    public bool canUseDashAbility;
+    public bool dashAbilityUsed;
+    public float dashAbilityCooldownTime;
+    private float dashAbilityCooldownCounter;
+
+    public bool canUseHideAbility;
+    public bool hideAbilityUsed;
+    public float hideAbilityCooldownTime;
+    private float hideAbilityCooldownCounter;
+
+    public bool canAttack;
+    public bool attackUsed;
+    public float attackCooldownTime;
+    private float attackCooldownCounter;
 
     private void Start()
     {
@@ -42,32 +56,63 @@ public class PlayerInput : MonoBehaviour
 
             if (!disableJump)
             {
-                
-                    if (Input.GetButtonDown("Jump"))
-                    {
-                        player.OnJumpInputDown();
-                    }
 
-                    if (Input.GetButtonUp("Jump"))
-                    {
-                        player.OnJumpInputUp();
-                    }
+                if (Input.GetButtonDown("Jump"))
+                {
+                    player.OnJumpInputDown();
+                }
+
+                if (Input.GetButtonUp("Jump"))
+                {
+                    player.OnJumpInputUp();
+                }
 
             }
 
-            if (Input.GetButtonDown("Dash"))
+            if (canUseDashAbility)
             {
-                if (nextDashTime <= Time.time)
+                if (Input.GetButtonDown("Dash"))
                 {
-                    nextDashTime = Time.time + player.fDashCooldown;
                     player.Dash();
+                    dashAbilityUsed = true;
+                    AbilityCooldown();
                 }
             }
-        
-            if (Input.GetButtonDown("Fire1"))
+
+            if (canAttack)
             {
-                player.Attack();
+                if (Input.GetButtonDown("Fire1"))
+                {
+
+                    player.Attack();
+                    attackUsed = true;
+                    AbilityCooldown();
+
+
+                }
             }
+            if (canUseHideAbility)
+            {
+
+                if (Input.GetButtonDown("Fire2"))
+
+                {
+                    player.Hide();
+                    hideAbilityUsed = true;
+                    AbilityCooldown();
+
+                }
+            }
+
+            
+            if (!canUseDashAbility|| !canUseHideAbility ||!canAttack) {
+
+                return;
+            }
+                
+            
+
+           
         }
 
         //DEBUG KEY INPUTS REGION
@@ -96,12 +141,12 @@ public class PlayerInput : MonoBehaviour
             player.HurtPlayer(-10f);
         }
 
-        if(Input.GetButtonDown("GainHeart"))
+        if (Input.GetButtonDown("GainHeart"))
         {
             player.ChangePlayerHealth(20f);
         }
 
-        if(Input.GetButtonDown("LoseHeart"))
+        if (Input.GetButtonDown("LoseHeart"))
         {
             player.ChangePlayerHealth(-20f);
         }
@@ -115,7 +160,7 @@ public class PlayerInput : MonoBehaviour
                 fSequenceNextTime = Time.time + Time.deltaTime;
             }
 
-            if(iSequenceLocation >= sSequence.Length)
+            if (iSequenceLocation >= sSequence.Length)
             {
                 //Debug.Log("sequence full");
                 bLookForSequence = false;
@@ -125,6 +170,8 @@ public class PlayerInput : MonoBehaviour
         }
 
     }
+
+ 
 
     private void CheckDisableInput()
     {
@@ -138,7 +185,39 @@ public class PlayerInput : MonoBehaviour
 
     private void CalculateTimers()
     {
-        if (player.fTimeSinceDashEnd <= (player.fDashTime + player.fDashImpactLeniency)) { player.fTimeSinceDashEnd += Time.deltaTime; }    // fTimeSinceDashEnd resets when dash starts, hence run this timer until end of dash (fDashTime) + leniency (fDash...Leniency)
+
+        if(dashAbilityCooldownCounter > 0)
+        {
+            dashAbilityCooldownCounter -= Time.deltaTime;
+                    }
+
+        if(dashAbilityCooldownCounter <= 0)
+        {
+            canUseDashAbility = true;
+            dashAbilityUsed = false;
+        }
+
+        if (hideAbilityCooldownCounter > 0)
+        {
+            hideAbilityCooldownCounter -= Time.deltaTime;
+        }
+
+        if (hideAbilityCooldownCounter <= 0)
+        {
+            canUseHideAbility = true;
+            hideAbilityUsed = false;
+        }
+
+        if(attackCooldownCounter > 0)
+        {
+            attackCooldownCounter -= Time.deltaTime;
+        }
+
+        if(attackCooldownCounter <= 0)
+        {
+            canAttack = true;
+            attackUsed = false;
+        }
     }
 
   private void DoRespawn()
@@ -170,6 +249,27 @@ public class PlayerInput : MonoBehaviour
             default:
                 break;
 
+        }
+    }
+
+    public void AbilityCooldown()
+    {
+        if (dashAbilityUsed)
+        {
+        canUseDashAbility = false;
+            dashAbilityCooldownCounter = dashAbilityCooldownTime;
+        }
+
+        if (hideAbilityUsed)
+        {
+            canUseHideAbility = false;
+            hideAbilityCooldownCounter = hideAbilityCooldownTime;
+        }
+
+        if (attackUsed)
+        {
+            canAttack = false;
+            attackCooldownCounter = attackCooldownTime;
         }
     }
     

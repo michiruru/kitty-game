@@ -15,12 +15,12 @@ public class Player : MonoBehaviour
     public bool bCanDoubleJump;
     public bool bCanWallClimb;
     public bool bCanDash = true;
-    public bool bCanDirDash = true;
     #endregion
 
     #region GameObjects
     private Controller2D controller;
     private Animator anim;
+    private Renderer playerSprite;
     #endregion
 
     #region EnviroPhysics
@@ -72,12 +72,10 @@ public class Player : MonoBehaviour
     [Header("Dash")]
     private bool bIsDashing = false;
     [HideInInspector] public float fNextDashTime;   // the time at which the next dash can occur (?)
-    [HideInInspector] public float fDashDuration;    // timer for how long current dash has been running
     public float fDashCooldown;     // timer for cooldown between dashes
-    [HideInInspector] public float fTimeSinceDashEnd;    // timer for leniency at end of dash
     public float fDashSpeed = 25f; //25f
-    public float fDashTime = 0.2f; //0.2f how long the dash will last for
-    public float fDashImpactLeniency = 0.2f;  // leniency at end of dash to allow for impact breaking of walls etc.
+    private float dashTimeCounter;
+    public float dashTime = 0.2f; //0.2f how long the dash will last for
     #endregion
 
     #region Attack
@@ -88,8 +86,26 @@ public class Player : MonoBehaviour
     public bool bisHurt;
     public float hurtTime;
     private float hurtTimeCounter;
+
+    public int iAttackCount = 0;
+    public int iMaxAttackCount = 3;
+
+    public float comboTime;
+    private float comboTimeCounter;
     #endregion
 
+    #region
+    [Header("Knockback")]
+    public float invinsibilityTime;
+    private float invinsibilityTimeCounter;
+    #endregion
+
+    #region Hide
+    [Header("Hiding")]
+    public bool bisHiding;
+    public float hideTime;
+    public float hideTimeCounter;
+    #endregion
 
     #region EnviroInteractions
     [Header("Ladder Climb")]
@@ -100,15 +116,15 @@ public class Player : MonoBehaviour
 
     #region Animation
     [Header("AnimationBools")]
-    
+
     public bool animTravelLeft;
-     public bool animTravelDown;
-     public bool animGrounded;
-     public bool animDoubleJump;
-     public bool animWallClimb;
-     public bool animDash;
-     public bool animFalse;
-     public bool animOnLadder;
+    public bool animTravelDown;
+    public bool animGrounded;
+    public bool animDoubleJump;
+    public bool animWallClimb;
+    public bool animDash;
+    public bool animFalse;
+    public bool animOnLadder;
     public bool animOnWall;
     public bool animAttacking;
     public bool animHurt;
@@ -118,6 +134,7 @@ public class Player : MonoBehaviour
     {
         anim = GetComponentInChildren<Animator>();
         controller = GetComponent<Controller2D>();
+        playerSprite = GetComponentInChildren<Renderer>();
         fGravity = -(2 * fMaxJumpHeight) / Mathf.Pow(fTimeToJumpApex, 2);
         fMaxJumpVelocity = Mathf.Abs(fGravity) * fTimeToJumpApex;
         fMinJumpVelocity = Mathf.Sqrt(2 * Mathf.Abs(fGravity) * fMinJumpHeight);
@@ -138,43 +155,25 @@ public class Player : MonoBehaviour
 
         CheckCollision();
 
-       if (bCanWallClimb) { HandleWallSliding(); }
-
-
+        if (bCanWallClimb) { HandleWallSliding(); }
 
         CalculateAnimBools();
-
 
         if (bOnLadder) { LadderClimb(); }
 
         #region Dash code
-        if (bIsDashing && fDashDuration < fDashTime)
+        if (bIsDashing)
         {
-            float totalInput = Mathf.Abs(vDirectionalInput.x) + Mathf.Abs(vDirectionalInput.y);
-            if (bCanDirDash && totalInput > 0.01)
-            {
-                vVelocity.x = fDashSpeed * vDirectionalInput.x / totalInput;
-                vVelocity.y = fDashSpeed * vDirectionalInput.y / totalInput;
+            vVelocity.x = fDashSpeed;
+            vVelocity.y = 0;
 
-            }
-            else
+            if (animTravelLeft)
             {
-                vVelocity.x = fDashSpeed * (animTravelLeft ? -1 : 1);
+                vVelocity.x = fDashSpeed * -1;
                 vVelocity.y = 0;
             }
-
-
-            fDashDuration += Time.deltaTime;
         }
-        else if (bIsDashing && (fDashDuration >= fDashTime && fDashDuration < 1.1f * fDashTime))
-        {
-            //vVelocity.x = 0; // reimplementing this causes the player to 'rebound ' in the opposite x-direction
-            vVelocity.y = 0;
-            bIsDashing = false;
-            animDash = false;
-        }
-        else
-        { bIsDashing = false; animDash = false; } // just in case, catch and turn off the dash
+
         #endregion
 
         #region Apply MOVEMENT
@@ -189,6 +188,7 @@ public class Player : MonoBehaviour
         CalculateAnimFloats();
 
     }
+
 
     // CALLED FROM UPDATE INITIAL
     private void ResetSkills()
@@ -219,12 +219,16 @@ public class Player : MonoBehaviour
         if (attackTimeCounter > 0)
         {
             attackTimeCounter -= Time.deltaTime;
+            vVelocity.x = 0;
+
         }
 
         if (attackTimeCounter <= 0)
         {
             bisAttacking = false;
+            iAttackCount = 0;
         }
+
 
         if (hurtTimeCounter > 0)
         {
@@ -234,6 +238,41 @@ public class Player : MonoBehaviour
         if (hurtTimeCounter <= 0)
         {
             bisHurt = false;
+        }
+
+        if (hideTimeCounter > 0)
+        {
+            hideTimeCounter -= Time.deltaTime;
+        }
+
+        if (hideTimeCounter < 0)
+        {
+            bisHiding = false;
+            playerSprite.material.color = new Color(playerSprite.material.color.r, playerSprite.material.color.g, playerSprite.material.color.b, 1f);
+
+            Physics2D.IgnoreLayerCollision(9, 13, false);
+
+        }
+
+        if (dashTimeCounter >= 0)
+        {
+            dashTimeCounter -= Time.deltaTime;
+        }
+
+        if (dashTimeCounter< 0)
+        {
+            bIsDashing = false;
+            animDash = false;
+        }
+
+        if(invinsibilityTimeCounter >= 0)
+        {
+            invinsibilityTimeCounter -= Time.deltaTime;
+        }
+        if (invinsibilityTimeCounter < 0)
+        {
+           // Physics2D.IgnoreLayerCollision(9, 13, false); this turns off collisions always, how can I turn them back on without relying on enemy code??
+
         }
     }
 
@@ -305,7 +344,6 @@ public class Player : MonoBehaviour
         else
         {
             transform.localScale = new Vector3(1f, 1f, 1f);
-
         }
 
         if (animTravelDown)
@@ -366,6 +404,8 @@ public class Player : MonoBehaviour
         anim.SetFloat("velocityY", (vVelocity.y));
 
         anim.SetFloat("falltimerdelay", fFallDelayTimer - fFallDelay);
+
+        anim.SetInteger("attackCount", iAttackCount);
     }
 
     // CALLED FROM UPDATE CONDITIONALLY
@@ -469,13 +509,12 @@ public class Player : MonoBehaviour
     {
         if (bCanDash)
         {
-            //Debug.Log("dashed");
-            fDashDuration = 0.0f;    // reset the current dash timer
-            fTimeSinceDashEnd = 0.0f;    // reset timer since dash end
+            dashTimeCounter = dashTime;    // set dash timer
             bIsDashing = true;         // state dashing
             animDash = true;
-            PlayerInput.disableInputTime = fDashTime;
         }
+
+     
     }
 
     public void Respawn(Vector3 vSpawnPosition)
@@ -491,11 +530,10 @@ public class Player : MonoBehaviour
 
         fGravity = 0;
         climbVelocityX = climbSpeed * Input.GetAxisRaw("Horizontal");
-        //vVelocity.x = 0;
         climbVelocityY = climbSpeed * Input.GetAxisRaw("Vertical");
         vVelocity = new Vector2(climbVelocityX, climbVelocityY);
 
-        if(climbVelocityY > 0)
+        if (climbVelocityY > 0)
         {
             anim.speed = 1;
         }
@@ -510,6 +548,50 @@ public class Player : MonoBehaviour
         attackTimeCounter = attackTime;
         bisAttacking = true;
 
+
+        if (bisAttacking)
+        {
+            comboTimeCounter = comboTime;
+            iAttackCount++;
+
+            if (iAttackCount > 2)
+            {
+                attackTimeCounter = attackTime;
+            }
+        
+        }
+
+    }
+
+    public void Hide()
+    {
+        bisHiding = true;
+        if (bisHiding)
+        {
+            Physics2D.IgnoreLayerCollision(9, 13, true);
+
+            hideTimeCounter = hideTime;
+            playerSprite.material.color = new Color(playerSprite.material.color.r, playerSprite.material.color.g, playerSprite.material.color.b, 0.5f);
+            
+        }
+    }
+
+    public void Knockback(float knockbackAmountX, float knockbackAmountY)
+    {
+        vVelocity.x = knockbackAmountX * -1;
+        vVelocity.y = knockbackAmountY;
+        Physics2D.IgnoreLayerCollision(9, 13, true);
+
+        if (animTravelLeft)
+        {
+            vVelocity.x = knockbackAmountX;
+            vVelocity.y = knockbackAmountY;
+            Physics2D.IgnoreLayerCollision(9, 13, true);
+
+        }
+
+        invinsibilityTimeCounter = invinsibilityTime;
+        
     }
 
     public void HurtPlayer(float amountHurtPlayer)
@@ -549,9 +631,9 @@ public class Player : MonoBehaviour
     {
         if (collider.transform.tag == "Ladder")
         {
-            Debug.Log("I'm on a ladder bitch");
             bOnLadder = true;
         }
+
     }
 
     public void OnTriggerExit2D(Collider2D collider)
