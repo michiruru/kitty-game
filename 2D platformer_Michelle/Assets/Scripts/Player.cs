@@ -150,7 +150,7 @@ public class Player : MonoBehaviour
     {
         ResetSkills();
         CalculateTimers();
-        //CheckDeath();
+        CheckDeath();
         CalculateVelocity();
 
         CheckCollision();
