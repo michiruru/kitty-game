@@ -62,7 +62,7 @@ public class PlayerInput : MonoBehaviour
                     player.OnJumpInputDown();
                 }
 
-                if (Input.GetButtonUp("Jump"))
+               if (Input.GetButtonUp("Jump"))
                 {
                     player.OnJumpInputUp();
                 }
@@ -71,7 +71,7 @@ public class PlayerInput : MonoBehaviour
 
             if (canUseDashAbility)
             {
-                if (Input.GetButtonDown("Dash"))
+                if (Input.GetButtonDown("Fire1"))
                 {
                     player.Dash();
                     dashAbilityUsed = true;
@@ -81,7 +81,7 @@ public class PlayerInput : MonoBehaviour
 
             if (canAttack)
             {
-                if (Input.GetButtonDown("Fire1"))
+                if (Input.GetButtonDown("Dash"))
                 {
 
                     player.Attack();

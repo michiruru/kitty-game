@@ -21,6 +21,7 @@ public class Player : MonoBehaviour
     private Controller2D controller;
     private Animator anim;
     private Renderer playerSprite;
+    private BoxCollider2D playerCollider;
     #endregion
 
     #region EnviroPhysics
@@ -97,7 +98,7 @@ public class Player : MonoBehaviour
     #region
     [Header("Knockback")]
     public float invinsibilityTime;
-    private float invinsibilityTimeCounter;
+    public float invinsibilityTimeCounter;
     #endregion
 
     #region Hide
@@ -139,6 +140,7 @@ public class Player : MonoBehaviour
         fMaxJumpVelocity = Mathf.Abs(fGravity) * fTimeToJumpApex;
         fMinJumpVelocity = Mathf.Sqrt(2 * Mathf.Abs(fGravity) * fMinJumpHeight);
         gravityStore = fGravity;
+        playerCollider = GetComponentInChildren<BoxCollider2D>();
 
         animGrounded = true;
 
@@ -219,7 +221,11 @@ public class Player : MonoBehaviour
         if (attackTimeCounter > 0)
         {
             attackTimeCounter -= Time.deltaTime;
-            vVelocity.x = 0;
+            vVelocity.x = fMoveSpeed/2;
+            if (animTravelLeft)
+            {
+                vVelocity.x = fMoveSpeed/-2;
+            }
 
         }
 
@@ -250,7 +256,7 @@ public class Player : MonoBehaviour
             bisHiding = false;
             playerSprite.material.color = new Color(playerSprite.material.color.r, playerSprite.material.color.g, playerSprite.material.color.b, 1f);
 
-            Physics2D.IgnoreLayerCollision(9, 13, false);
+            //Physics2D.IgnoreLayerCollision(9, 13, false);
 
         }
 
@@ -265,23 +271,27 @@ public class Player : MonoBehaviour
             animDash = false;
         }
 
-        if(invinsibilityTimeCounter >= 0)
+        if(invinsibilityTimeCounter > 0)
         {
+            Physics2D.IgnoreLayerCollision(9, 13, true);
+            //playerCollider.isTrigger = true;
             invinsibilityTimeCounter -= Time.deltaTime;
+
         }
-        if (invinsibilityTimeCounter < 0)
+        if (invinsibilityTimeCounter <= 0)
         {
-           // Physics2D.IgnoreLayerCollision(9, 13, false); this turns off collisions always, how can I turn them back on without relying on enemy code??
+            //playerCollider.isTrigger = false;
+           Physics2D.IgnoreLayerCollision(9, 13, false); //this turns off collisions always, how can I turn them back on without relying on enemy code??
 
         }
     }
 
     private void CheckDeath()
     {
-        if (controller.transform.position.y < -10)
+        /*if (controller.transform.position.y < -10)
         {
             Respawn(PlayerCheckpoint);
-        }
+        }*/
 
         if (fPlayerCurrentHealth <= 0)
         {
@@ -580,13 +590,13 @@ public class Player : MonoBehaviour
     {
         vVelocity.x = knockbackAmountX * -1;
         vVelocity.y = knockbackAmountY;
-        Physics2D.IgnoreLayerCollision(9, 13, true);
+        //Physics2D.IgnoreLayerCollision(9, 13, true);
 
         if (animTravelLeft)
         {
             vVelocity.x = knockbackAmountX;
             vVelocity.y = knockbackAmountY;
-            Physics2D.IgnoreLayerCollision(9, 13, true);
+            //Physics2D.IgnoreLayerCollision(9, 13, true);
 
         }
 

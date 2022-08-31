@@ -36,13 +36,13 @@ public class DamagePlayer : MonoBehaviour {
 
             if (!detectingPlayer)
             {
-                Physics2D.IgnoreLayerCollision(13, 9, false);
+                //Physics2D.IgnoreLayerCollision(13, 9, false);
 
             }
 
             if (detectingPlayer)
             {
-                Physics2D.IgnoreLayerCollision(13, 9, true);
+                //Physics2D.IgnoreLayerCollision(13, 9, true);
 
                 other.gameObject.GetComponent<Player>().HurtPlayer(damageAmount);
                 other.gameObject.GetComponent<Player>().Knockback(25, 5);
