@@ -1,0 +1,16 @@
+﻿<Properties StartupConfiguration="{FB7C3453-8D80-22F6-10AB-ECCDB5B4CBDE}|">
+  <MonoDevelop.Ide.ItemProperties.2D_220platformer__Michelle PreferredExecutionTarget="Unity.Editor" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/Scripts/UI.cs">
+    <Files>
+      <File FileName="Assets/Scripts/Player.cs" Line="503" Column="9" />
+      <File FileName="Assets/Scripts/PlayerInput.cs" Line="91" Column="34" />
+      <File FileName="Assets/Scripts/UI.cs" Line="40" Column="23" />
+    </Files>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+  <MultiItemStartupConfigurations />
+</Properties>
